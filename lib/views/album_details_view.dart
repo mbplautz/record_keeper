@@ -850,7 +850,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
         Expanded(
           flex: 4,
           child: DropdownButtonFormField<int>(
-            value: _monthSelected,
+            initialValue: _monthSelected,
             items: [
               const DropdownMenuItem(value: 0, child: Text('')),
               const DropdownMenuItem(value: 1, child: Text('January')),
