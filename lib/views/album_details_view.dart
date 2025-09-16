@@ -275,7 +275,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
       });
       // reload album & providers
       if (_album != null) {
-        await _albumProv.loadAlbums(); // refresh main list
+        await _albumProv.fetchAllAlbums(); // refresh main list
         await _tagProv.loadTagsForAlbum(_album!.id);
         await _trackProv.loadTracksForAlbum(_album!.id);
         final reloaded = await _albumProv.getAlbumById(_album!.id);
