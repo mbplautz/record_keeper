@@ -76,6 +76,9 @@ class AlbumProvider extends ChangeNotifier {
     return await _repo.searchAlbums(terms: terms, plusTerms: plusTerms, minusTerms: minusTerms, caseInsensitive: caseInsensitive);
   }
 
+  Map<String, bool> get searchFields => _searchFields;
+  SortOption get sortOption => _currentSort;
+
   Future<void> fetchAllAlbums() async {
     _allAlbums = await _repo.getAllAlbums();
     _applyFilters();
