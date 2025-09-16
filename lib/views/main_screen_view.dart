@@ -45,15 +45,29 @@ class _MainScreenViewState extends State<MainScreenView> {
     }
   }
 
+  final Map<String, String> _searchOptionsLabels = {
+    'title': 'Title',
+    'artist': 'Artist',
+    'sortArtist': 'Sort Artist',
+    'releaseDate': 'Release Date',
+    'tracks': 'Tracks',
+    'tags': 'Tags',
+  };
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<AlbumProvider>(context);
 
     return Scaffold(
+            // Section 2.2.1.1 - Title Banner
+      appBar: AppBar(
+        title: const Text("Record Keeper"),
+        centerTitle: true,
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            // Section 2.2.1.1 - Title Banner
+/*            // Section 2.2.1.1 - Title Banner
             const Padding(
               padding: EdgeInsets.all(16.0),
               child: Text(
@@ -64,7 +78,7 @@ class _MainScreenViewState extends State<MainScreenView> {
                 ),
               ),
             ),
-
+*/
             // Section 2.2.1.2 - Search Bar + Buttons Row
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -118,7 +132,7 @@ class _MainScreenViewState extends State<MainScreenView> {
                       return CheckedPopupMenuItem<String>(
                         value: key,
                         checked: provider.searchFields[key]!,
-                        child: Text(key),
+                        child: Text(_searchOptionsLabels[key]!),
                       );
                     }).toList(),
                   ),
