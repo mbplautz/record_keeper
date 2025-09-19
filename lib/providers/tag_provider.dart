@@ -34,4 +34,8 @@ class TagProvider extends ChangeNotifier {
       await loadTagsForAlbum(_albumId!);
     }
   }
+
+  void clearTags() {
+    tags.length = 0;
+  }
 }

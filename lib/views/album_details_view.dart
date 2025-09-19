@@ -45,6 +45,8 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
 
   // Tracks: local editable list of track names (persisted only on Save/Add)
   final TextEditingController _newTrackController = TextEditingController();
+  final TextEditingController _editTrackController = TextEditingController();
+
   List<String> _localTracks = [];
   int? _editingTrackIndex; // which index is being edited inline (-1 none)
 
@@ -53,6 +55,12 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
 
   // Tag dialog controller
   final TextEditingController _tagController = TextEditingController();
+
+  // Value Notifier for Form Validation
+  late final ValueNotifier<bool> _isFormValidNotifier;
+
+  List<String> _distinctArtists = [];
+  List<String> _distinctSortArtists = [];
 
   // Helpers to access providers
   AlbumProvider get _albumProv => context.read<AlbumProvider>();
@@ -65,6 +73,24 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
     _isNew = widget.albumId == null;
     _isEditMode = _isNew;
     _startedInViewMode = !_isNew;
+
+    // Form validation: watch text controllers
+    _isFormValidNotifier = ValueNotifier<bool>(_isFormValid());
+
+    for (final c in [
+      _titleController,
+      _artistController,
+      _yearController,
+      _dayController
+    ]) {
+      c.addListener(() {
+        Future.microtask(() {
+          if (mounted) {
+            _isFormValidNotifier.value = _isFormValid();
+          }
+        });
+      });
+    }
 
     if (_isNew) {
       // Prepare an empty album placeholder (id created now)
@@ -84,10 +110,18 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
         tags: [],
         tagSummary: null,
       );
+      // Clear tags when adding new
+      _tagProv.clearTags();
       _populateControllersFromAlbum();
     } else {
       _loadAlbumAndRelations();
     }
+
+    // 🔹 Preload distinct artist/sort lists
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _distinctArtists = await _albumProv.getDistinctArtistList();
+      _distinctSortArtists = await _albumProv.getDistinctSortArtistList();
+    });
   }
 
   @override
@@ -99,7 +133,9 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
     _yearController.dispose();
     _dayController.dispose();
     _newTrackController.dispose();
+    _editTrackController.dispose();
     _tagController.dispose();
+    _isFormValidNotifier.dispose();
     super.dispose();
   }
 
@@ -169,6 +205,10 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
       } else {
         // view was in view mode and is now in edit mode -> show "Cancel" text button
         return TextButton(
+          style: TextButton.styleFrom(
+            minimumSize: const Size(60, 40),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+          ),          
           onPressed: _onCancelEdit,
           child: const Text('Cancel'),
         );
@@ -189,10 +229,22 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
       foregroundColor: enabled ? Theme.of(context).appBarTheme.titleTextStyle?.color : Colors.grey,
     );
 
+    /*
     return TextButton(
       onPressed: enabled ? _onConfirmPressed : null,
       style: style,
       child: Text(_confirmButtonLabel),
+    );*/
+
+    return ValueListenableBuilder<bool>(
+      valueListenable: _isFormValidNotifier, 
+      builder: (context, isValid, child) {
+        return TextButton(
+          onPressed: !_isEditMode || isValid ? _onConfirmPressed : null,
+          style: style,
+          child: Text(_confirmButtonLabel),
+        );
+      }
     );
   }
 
@@ -214,7 +266,9 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
         final day = int.tryParse(_dayController.text.trim());
         if (day == null || day < 1 || day > 31) return false;
         // Validate day for selected month/year basic check (not perfect for Feb leap years)
-        if (_monthSelected != 0) {
+        if (_monthSelected == 0) {
+          return false;
+        } else {
           final monthDays = <int>[
             0,
             31, // Jan
@@ -622,6 +676,61 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
     );
   }
 
+    Widget _buildArtistAutocomplete() {
+    return Autocomplete<String>(
+      optionsBuilder: (TextEditingValue val) {
+        if (val.text.isEmpty) return const Iterable.empty();
+        final lower = val.text.toLowerCase();
+        return _distinctArtists
+            .where((a) => a.toLowerCase().contains(lower))
+            .toList()
+          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      },
+      onSelected: (selection) => _artistController.text = selection,
+      fieldViewBuilder: (ctx, ctrl, focus, onSubmit) {
+        ctrl.text = _artistController.text;
+        ctrl.selection = _artistController.selection;
+        ctrl.addListener(() {
+          _artistController.text = ctrl.text;
+          _artistController.selection = ctrl.selection;
+        });
+        return TextField(
+          controller: ctrl,
+          focusNode: focus,
+          decoration: const InputDecoration(border: OutlineInputBorder()),
+          maxLength: 255,
+        );
+      },
+    );
+  }
+  Widget _buildSortArtistAutocomplete() {
+    return Autocomplete<String>(
+      optionsBuilder: (TextEditingValue val) {
+        if (val.text.isEmpty) return const Iterable.empty();
+        final lower = val.text.toLowerCase();
+        return _distinctSortArtists
+            .where((a) => a.toLowerCase().contains(lower))
+            .toList()
+          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      },
+      onSelected: (selection) => _sortArtistController.text = selection,
+      fieldViewBuilder: (ctx, ctrl, focus, onSubmit) {
+        ctrl.text = _sortArtistController.text;
+        ctrl.selection = _sortArtistController.selection;
+        ctrl.addListener(() {
+          _sortArtistController.text = ctrl.text;
+          _sortArtistController.selection = ctrl.selection;
+        });
+        return TextField(
+          controller: ctrl,
+          focusNode: focus,
+          decoration: const InputDecoration(border: OutlineInputBorder()),
+          maxLength: 255,
+        );
+      },
+    );
+  }
+  
   @override
   Widget build(BuildContext context) {
     final tags = context.watch<TagProvider>().tags;
@@ -629,6 +738,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_headerText),
+        centerTitle: true,
         leading: _buildLeadingButton(),
         actions: [
           _buildConfirmButton(),
@@ -657,7 +767,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                         _buildDetailField(
                           'Artist *',
                           _isEditMode
-                              ? TextField(controller: _artistController, maxLength: 255)
+                              ?  _buildArtistAutocomplete() //TextField(controller: _artistController, maxLength: 255)
                               : Text(_album!.artist.isNotEmpty ? _album!.artist : '-', style: Theme.of(context).textTheme.bodyLarge),
                         ),
                         _buildDetailField(
@@ -667,7 +777,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                         _buildDetailField(
                           'Sort Artist',
                           _isEditMode
-                              ? TextField(controller: _sortArtistController, maxLength: 255)
+                              ? _buildSortArtistAutocomplete() //TextField(controller: _sortArtistController, maxLength: 255)
                               : Text(_album!.sortArtist ?? '-', style: Theme.of(context).textTheme.bodyLarge),
                         ),
                         _buildDetailField(

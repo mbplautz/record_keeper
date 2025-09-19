@@ -67,6 +67,14 @@ class AlbumProvider extends ChangeNotifier {
     return await _repo.getAllAlbums();
   }
 
+  Future<List<String>> getDistinctArtistList() async {
+    return await _repo.getDistinctArtistList();
+  }
+
+  Future<List<String>> getDistinctSortArtistList() async {
+    return await _repo.getDistinctSortArtistList();
+  }
+
   Future<List<Album>> searchAlbums({
     List<String>? terms,
     List<String>? plusTerms,

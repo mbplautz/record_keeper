@@ -9,6 +9,8 @@ abstract class AlbumRepository {
   Future<void> deleteAlbum(String albumId);
   Future<Album?> getAlbumById(String albumId);
   Future<List<Album>> getAllAlbums();
+  Future<List<String>> getDistinctArtistList();
+  Future<List<String>> getDistinctSortArtistList();
 
   /// Filtering & Searching
   /// Returns albums that match any of the provided terms (OR logic),

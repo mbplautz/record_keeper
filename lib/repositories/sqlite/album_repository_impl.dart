@@ -75,6 +75,28 @@ class AlbumRepositoryImpl implements AlbumRepository {
   }
 
   @override
+  Future<List<String>> getDistinctArtistList() async {
+    final db = await _db.database;
+    final result = await db.query('albums', 
+      distinct: true,
+      columns: ['artist']
+    );
+    return result.map((m) => m['artist'] as String).toList();
+  }
+
+  @override
+  Future<List<String>> getDistinctSortArtistList() async {
+    final db = await _db.database;
+    final result = await db.query('albums', 
+      distinct: true,
+      columns: ['sort_artist'],
+      where: 'sort_artist IS NOT NULL'
+    );
+    return result.map((m) => m['sort_artist'] as String).toList();
+  }
+
+
+  @override
   Future<List<Album>> searchAlbums({
     List<String>? terms,
     List<String>? plusTerms,
