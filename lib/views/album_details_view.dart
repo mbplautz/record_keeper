@@ -544,18 +544,18 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
   void _onEditTrackStart(int index) {
     setState(() {
       _editingTrackIndex = index;
-      _newTrackController.text = _localTracks[index];
+      _editTrackController.text = _localTracks[index];
     });
   }
 
   void _onCommitTrackEdit() {
     if (_editingTrackIndex == null) return;
-    final text = _newTrackController.text.trim();
+    final text = _editTrackController.text.trim();
     if (text.isEmpty || text.length > 255) return;
     setState(() {
       _localTracks[_editingTrackIndex!] = text;
       _editingTrackIndex = null;
-      _newTrackController.clear();
+      _editTrackController.clear();
     });
   }
 
@@ -808,7 +808,8 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                                       children: [
                                         Expanded(
                                           child: TextField(
-                                            controller: _newTrackController,
+                                            controller: _editTrackController,
+                                            decoration: const InputDecoration(hintText: 'Edit track'),
                                             maxLength: 255,
                                           ),
                                         ),
@@ -828,7 +829,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                                           child: Text('$numbering$trackName', style: Theme.of(context).textTheme.bodyLarge),
                                         ),
                                       ),
-                                      if (_isEditMode) ...[
+                                      if (_isEditMode && _editingTrackIndex == null) ...[
                                         IconButton(
                                           icon: const Icon(Icons.arrow_upward),
                                           onPressed: i == 0 ? null : () => _onMoveTrackUp(i),
@@ -861,11 +862,12 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                                         decoration: const InputDecoration(hintText: 'Add new track'),
                                         maxLength: 255,
                                         onSubmitted: (_) => _onAddTrack(),
+                                        enabled: _editingTrackIndex == null
                                       ),
                                     ),
                                     IconButton(
                                       icon: const Icon(Icons.add),
-                                      onPressed: _onAddTrack,
+                                      onPressed: _editingTrackIndex == null ?_onAddTrack : null,
                                     ),
                                   ],
                                 ),
@@ -894,7 +896,10 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
                                       children: [
+                                        Text(tag.tag, style: const TextStyle(color: Colors.white)),
+                                        const SizedBox(width: 6),
                                         GestureDetector(
                                           onTap: () async {
                                             // remove tag immediately
@@ -902,8 +907,6 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                                           },
                                           child: const Icon(Icons.close, size: 16, color: Colors.white),
                                         ),
-                                        const SizedBox(width: 6),
-                                        Text(tag.tag, style: const TextStyle(color: Colors.white)),
                                       ],
                                     ),
                                   ),
