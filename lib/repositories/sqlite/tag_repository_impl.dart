@@ -39,6 +39,16 @@ class TagRepositoryImpl implements TagRepository {
   }
 
   @override
+  Future<List<String>> getDistinctTagList() async {
+    final db = await _db.database;
+    final result = await db.query('tags', 
+      distinct: true,
+      columns: ['tag']
+    );
+    return result.map((m) => m['tag'] as String).toList();
+  }
+
+  @override
   Future<Tag?> getTagById(int tagId) async {
     final db = await _db.database;
     final maps = await db.query(
@@ -50,6 +60,15 @@ class TagRepositoryImpl implements TagRepository {
       return Tag.fromMap(maps.first);
     }
     return null;
+  }
+
+  @override
+  Future<List<Tag>> getAllTags() async {
+    final db = await _db.database;
+    final maps = await db.query(
+      'tags',
+    );
+    return maps.map((m) => Tag.fromMap(m)).toList();
   }
 
   @override

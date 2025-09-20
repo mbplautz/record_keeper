@@ -1,6 +1,10 @@
 // lib/providers/album_provider.dart
 
 import 'package:flutter/foundation.dart';
+import 'package:record_keeper/models/tag.dart';
+import 'package:record_keeper/models/track.dart';
+import 'package:record_keeper/repositories/tag_repository.dart';
+import 'package:record_keeper/repositories/track_repository.dart';
 import '../models/album.dart';
 import '../repositories/album_repository.dart';
 
@@ -14,6 +18,8 @@ enum SortOption {
 
 class AlbumProvider extends ChangeNotifier {
   final AlbumRepository _repo;
+  final TrackRepository _trackRepo;
+  final TagRepository _tagRepo;
   List<Album> _allAlbums = [];
   List<Album> _filteredAlbums = [];
   SortOption _currentSort = SortOption.artistThenYear;
@@ -27,7 +33,7 @@ class AlbumProvider extends ChangeNotifier {
     'tags': true,
   };
 
-  AlbumProvider(this._repo);
+  AlbumProvider(this._repo, this._trackRepo, this._tagRepo);
 
   List<Album> get albums => _filteredAlbums;
   SortOption get currentSort => _currentSort;
@@ -89,6 +95,19 @@ class AlbumProvider extends ChangeNotifier {
 
   Future<void> fetchAllAlbums() async {
     _allAlbums = await _repo.getAllAlbums();
+    // Populate all of the tags and tracks in each album
+    List<Track> tracks = await _trackRepo.getAllTracks();
+    List<Tag> tags = await _tagRepo.getAllTags();
+    Map<String, Album> albumMap = {};
+    for (var a in _allAlbums) {
+      albumMap[a.id] = a;
+    }
+    for (var t in tracks) {
+      albumMap[t.albumId]?.tracks.add(t);
+    }
+    for (var t in tags) {
+      albumMap[t.albumId]?.tags.add(t);
+    }
     _applyFilters();
   }
 
@@ -146,7 +165,7 @@ class AlbumProvider extends ChangeNotifier {
       }
 
       // Handle quoted terms
-      if (token.startsWith('"') && token.endsWith('"')) {
+      if (token.length > 1 && token.startsWith('"') && token.endsWith('"')) {
         token = token.substring(1, token.length - 1);
         token = token.replaceAll(r'\"', '"'); // unescape quotes
         token = token.replaceAll(r'\\', r'\'); // unescape backslashes

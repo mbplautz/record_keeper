@@ -61,6 +61,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
 
   List<String> _distinctArtists = [];
   List<String> _distinctSortArtists = [];
+  List<String> _distinctTags = [];
 
   // Helpers to access providers
   AlbumProvider get _albumProv => context.read<AlbumProvider>();
@@ -121,6 +122,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _distinctArtists = await _albumProv.getDistinctArtistList();
       _distinctSortArtists = await _albumProv.getDistinctSortArtistList();
+      _distinctTags = await _tagProv.getDistinctTagList();
     });
   }
 
@@ -354,14 +356,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
               children: [
                 const Text('Add Tag', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: _tagController,
-                  autofocus: true,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: 'Tag',
-                  ),
-                ),
+                _buildTagAutocomplete(),
                 const SizedBox(height: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -720,6 +715,33 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
         ctrl.addListener(() {
           _sortArtistController.text = ctrl.text;
           _sortArtistController.selection = ctrl.selection;
+        });
+        return TextField(
+          controller: ctrl,
+          focusNode: focus,
+          decoration: const InputDecoration(border: OutlineInputBorder()),
+          maxLength: 255,
+        );
+      },
+    );
+  }
+  Widget _buildTagAutocomplete() {
+    return Autocomplete<String>(
+      optionsBuilder: (TextEditingValue val) {
+        if (val.text.isEmpty) return const Iterable.empty();
+        final lower = val.text.toLowerCase();
+        return _distinctTags
+            .where((a) => a.toLowerCase().contains(lower))
+            .toList()
+          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      },
+      onSelected: (selection) => _tagController.text = selection,
+      fieldViewBuilder: (ctx, ctrl, focus, onSubmit) {
+        ctrl.text = _tagController.text;
+        ctrl.selection = _tagController.selection;
+        ctrl.addListener(() {
+          _tagController.text = ctrl.text;
+          _tagController.selection = ctrl.selection;
         });
         return TextField(
           controller: ctrl,

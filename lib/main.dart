@@ -61,7 +61,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => AlbumProvider(albumRepository),
+          create: (_) => AlbumProvider(albumRepository, trackRepository, tagRepository),
         ),
         ChangeNotifierProvider(
           create: (_) => TrackProvider(trackRepository),

@@ -7,6 +7,8 @@ abstract class TagRepository {
   Future<void> insertTag(Tag tag);
   Future<void> deleteTag(int tagId);
   Future<Tag?> getTagById(int tagId);
+  Future<List<String>> getDistinctTagList();
+  Future<List<Tag>> getAllTags();
 
   /// List tags by album
   Future<List<Tag>> getTagsByAlbumId(String albumId);

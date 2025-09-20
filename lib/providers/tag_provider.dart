@@ -35,6 +35,10 @@ class TagProvider extends ChangeNotifier {
     }
   }
 
+  Future<List<String>> getDistinctTagList() async {
+    return await _repo.getDistinctTagList();
+  }
+
   void clearTags() {
     tags.length = 0;
   }

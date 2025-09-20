@@ -71,7 +71,7 @@ class AlbumRepositoryImpl implements AlbumRepository {
   Future<List<Album>> getAllAlbums() async {
     final db = await _db.database;
     final maps = await db.query('albums');
-    return maps.map((m) => Album.fromMap(m)).toList();
+    return maps.map((m) => Album.fromMap(m, tracks: [], tags: [])).toList();
   }
 
   @override

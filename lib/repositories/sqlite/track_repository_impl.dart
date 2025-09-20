@@ -68,6 +68,15 @@ class TrackRepositoryImpl implements TrackRepository {
   }
 
   @override
+  Future<List<Track>> getAllTracks() async {
+    final db = await _db.database;
+    final maps = await db.query(
+      'tracks'
+    );
+    return maps.map((m) => Track.fromMap(m)).toList();
+  }
+
+  @override
   Future<List<Track>> getTracksByAlbumId(String albumId) async {
     final db = await _db.database;
     final maps = await db.query(
