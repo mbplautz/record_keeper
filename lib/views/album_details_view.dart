@@ -208,7 +208,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
         // view was in view mode and is now in edit mode -> show "Cancel" text button
         return TextButton(
           style: TextButton.styleFrom(
-            minimumSize: const Size(60, 40),
+            minimumSize: const Size(100, 40),
             padding: const EdgeInsets.symmetric(horizontal: 16),
           ),          
           onPressed: _onCancelEdit,
@@ -770,6 +770,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
       appBar: AppBar(
         title: Text(_headerText),
         centerTitle: true,
+        leadingWidth: !_isNew && _isEditMode ? 100 : 50,
         leading: _buildLeadingButton(),
         actions: [
           _buildConfirmButton(),
