@@ -226,10 +226,6 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
 
   // Confirm button widget
   Widget _buildConfirmButton() {
-    final enabled = !_isEditMode || _isFormValid();
-    final style = TextButton.styleFrom(
-      foregroundColor: enabled ? Theme.of(context).appBarTheme.titleTextStyle?.color : Colors.grey,
-    );
 
     /*
     return TextButton(
@@ -241,9 +237,13 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
     return ValueListenableBuilder<bool>(
       valueListenable: _isFormValidNotifier, 
       builder: (context, isValid, child) {
+        final enabled = !_isEditMode || _isFormValid(); //isValid; //_isFormValid();
+/*        final style = TextButton.styleFrom(
+          foregroundColor: enabled ? Theme.of(context).appBarTheme.titleTextStyle?.color : Colors.grey,
+        );*/
         return TextButton(
-          onPressed: !_isEditMode || isValid ? _onConfirmPressed : null,
-          style: style,
+          onPressed: enabled /*!_isEditMode || isValid */? _onConfirmPressed : null,
+          //style: style,
           child: Text(_confirmButtonLabel),
         );
       }
@@ -349,70 +349,79 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
       barrierDismissible: true,
       builder: (ctx) {
         return Dialog(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Add Tag', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                _buildTagAutocomplete(),
-                const SizedBox(height: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () async {
-                        final text = _tagController.text;
-                        if (text.trim().isEmpty) {
-                          Navigator.of(ctx).pop();
-                          return;
-                        }
-
-                        // Per spec: case-sensitive duplicate check
-                        final existing = _tagProv.tags;
-                        final alreadyExists = existing.any((t) => t.tag == text);
-                        if (!alreadyExists) {
-                          final tag = Tag(id: null, albumId: _album!.id, tag: text);
-                          await _tagProv.addTag(tag); // persists immediately
-                          // recompute summary and update album
-                          final tagsNow = _tagProv.tags;
-                          final summary = tagsNow.map((t) => _escapeTag(t.tag)).join('; ');
-                          final updatedAlbum = Album(
-                            id: _album!.id,
-                            title: _titleController.text.trim(),
-                            artist: _artistController.text.trim(),
-                            sortArtist: _sortArtistController.text.trim().isEmpty ? null : _sortArtistController.text.trim(),
-                            releaseYear: _yearController.text.trim().isEmpty ? null : int.parse(_yearController.text.trim()),
-                            releaseMonth: _monthSelected == 0 ? null : _monthSelected,
-                            releaseDay: _dayController.text.trim().isEmpty ? null : int.parse(_dayController.text.trim()),
-                            wikiUrl: _wikiController.text.trim().isEmpty ? null : _wikiController.text.trim(),
-                            coverImagePath: _album!.coverImagePath,
-                            coverThumbnailPath: _album!.coverThumbnailPath,
-                            tracks: _album!.tracks,
-                            tags: _tagProv.tags,
-                            tagSummary: summary,
-                          );
-                          await _albumProv.updateAlbum(updatedAlbum);
-                          _album = updatedAlbum;
-                        }
-                        Navigator.of(ctx).pop();
-                        if (mounted) setState(() {});
-                      },
-                      child: const Text('OK'),
-                    ),
-                    const SizedBox(height: 8),
-                    OutlinedButton(
-                      onPressed: () {
-                        Navigator.of(ctx).pop();
-                      },
-                      child: const Text('Cancel'),
-                    ),
-                  ],
-                ),
-              ],
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 600
             ),
-          ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Add Tag', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  _buildTagAutocomplete(),
+                  const SizedBox(height: 12),
+                  Row(
+                    //crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.of(ctx).pop();
+                          },
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final text = _tagController.text;
+                            if (text.trim().isEmpty) {
+                              Navigator.of(ctx).pop();
+                              return;
+                            }
+
+                            // Per spec: case-sensitive duplicate check
+                            final existing = _tagProv.tags;
+                            final alreadyExists = existing.any((t) => t.tag == text);
+                            if (!alreadyExists) {
+                              final tag = Tag(id: null, albumId: _album!.id, tag: text);
+                              await _tagProv.addTag(tag); // persists immediately
+                              // recompute summary and update album
+                              final tagsNow = _tagProv.tags;
+                              final summary = tagsNow.map((t) => _escapeTag(t.tag)).join('; ');
+                              final updatedAlbum = Album(
+                                id: _album!.id,
+                                title: _titleController.text.trim(),
+                                artist: _artistController.text.trim(),
+                                sortArtist: _sortArtistController.text.trim().isEmpty ? null : _sortArtistController.text.trim(),
+                                releaseYear: _yearController.text.trim().isEmpty ? null : int.parse(_yearController.text.trim()),
+                                releaseMonth: _monthSelected == 0 ? null : _monthSelected,
+                                releaseDay: _dayController.text.trim().isEmpty ? null : int.parse(_dayController.text.trim()),
+                                wikiUrl: _wikiController.text.trim().isEmpty ? null : _wikiController.text.trim(),
+                                coverImagePath: _album!.coverImagePath,
+                                coverThumbnailPath: _album!.coverThumbnailPath,
+                                tracks: _album!.tracks,
+                                tags: _tagProv.tags,
+                                tagSummary: summary,
+                              );
+                              await _albumProv.updateAlbum(updatedAlbum);
+                              _album = updatedAlbum;
+                            }
+                            Navigator.of(ctx).pop();
+                            if (mounted) setState(() {});
+                          },
+                          child: const Text('OK'),
+                        ),
+                      )
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          )
         );
       },
     );
