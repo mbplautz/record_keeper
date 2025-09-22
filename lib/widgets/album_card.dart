@@ -59,19 +59,27 @@ class AlbumCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-
-                  // Tags summary
-                  if (album.tagSummary != null &&
-                      album.tagSummary!.trim().isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Text(
-                        album.tagSummary!,
-                        style: Theme.of(context).textTheme.bodySmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                  if (album.tags.isNotEmpty)
+                  SizedBox(
+                    height: 32, // height of one tag row
+                    child: ClipRect(
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final tag in album.tags)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).primaryColor,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(tag.tag, style: const TextStyle(color: Colors.white)),
+                            ),
+                        ],
                       ),
                     ),
+                  ),
                 ],
               ),
             ),
@@ -81,3 +89,5 @@ class AlbumCard extends StatelessWidget {
     );
   }
 }
+/*
+I'll tell you about another change I made to the code. I noticed that the search feature was not actually searching any of the tracks or the tags, even when those were selected as search options. I realized that it was because in the call to `fetchAllAlbums`, it was only reading from the `albums` table and having empty lists for the tags and tracks fields. To fix it, I added loads to the `tags` and `tracks` tables, and populated the empty lists so that `fetchAllAlbums` now loaded all album data. */
