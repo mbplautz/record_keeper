@@ -40,6 +40,7 @@ class AlbumProvider extends ChangeNotifier {
   String get currentSearch => _currentSearch;
 
   /// Load all albums (used by Main Screen)
+  /// @Deprecated - use fetchAllAlbums
   Future<void> loadAlbums() async {
     _allAlbums = await _repo.getAllAlbums();
     notifyListeners();
@@ -48,19 +49,19 @@ class AlbumProvider extends ChangeNotifier {
   /// Add a new album
   Future<void> addAlbum(Album album) async {
     await _repo.insertAlbum(album);
-    await loadAlbums();
+    await fetchAllAlbums();
   }
 
   /// Update an existing album
   Future<void> updateAlbum(Album album) async {
     await _repo.updateAlbum(album);
-    await loadAlbums();
+    await fetchAllAlbums();
   }
 
   /// Delete an album by its UUID string
   Future<void> deleteAlbum(String albumId) async {
     await _repo.deleteAlbum(albumId);
-    await loadAlbums();
+    await fetchAllAlbums();
   }
 
   /// Get a single album (useful for Album Details screen to load the album and then tracks/tags)

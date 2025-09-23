@@ -1,17 +1,113 @@
 // lib/widgets/album_card.dart
 
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter/material.dart';
 import '../models/album.dart';
+import '../providers/album_provider.dart';
 import '../utils/image_utils.dart';
+import '../views/album_details_view.dart';
+import 'package:provider/provider.dart';
 
 class AlbumCard extends StatelessWidget {
   final Album album;
 
-  const AlbumCard({Key? key, required this.album}) : super(key: key);
+  const AlbumCard({super.key, required this.album});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+  return Slidable(
+    key: ValueKey(album.id),
+
+    // Defines the action pane when swiping left
+    endActionPane: ActionPane(
+      motion: const StretchMotion(),
+      extentRatio: 0.5, // 50% of the item width (adjust as needed)
+      children: [
+        SlidableAction(
+          onPressed: (_) {
+            // Default option: open album details
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AlbumDetailsView(albumId: album.id),
+              ),
+            );
+          },
+          backgroundColor: Colors.blue,
+          foregroundColor: Colors.white,
+          icon: Icons.info,
+          label: 'View',
+        ),
+        SlidableAction(
+          onPressed: (ctx) async {
+            final albumProv = ctx.read<AlbumProvider>();
+            final confirm = await showDialog<bool>(
+              context: ctx,
+              builder: (context) {
+                return Dialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Header
+                        const Text(
+                          'Confirm',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Body
+                        const Text('Are you sure?'),
+                        const SizedBox(height: 24),
+
+                        // Buttons row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(false); // Cancel
+                              },
+                              child: const Text('Cancel'),
+                            ),
+                            const SizedBox(width: 8),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(true); // OK
+                              },
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+
+            if (confirm == true) {
+              albumProv.deleteAlbum(album.id);
+            }
+          },
+          backgroundColor: Colors.red,
+          foregroundColor: Colors.white,
+          icon: Icons.delete,
+          label: 'Delete',
+        ),
+      ],
+    ),
+
+    // The child is your existing album card layout
+    child:     Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -86,7 +182,8 @@ class AlbumCard extends StatelessWidget {
           ],
         ),
       ),
-    );
+    )
+  );
   }
 }
 /*
