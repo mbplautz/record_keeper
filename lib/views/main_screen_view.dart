@@ -3,8 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/album.dart';
+import '../models/tag.dart';
 import '../providers/album_provider.dart';
+import '../providers/tag_provider.dart';
 import '../widgets/album_card.dart';
 import 'album_details_view.dart';
 
@@ -18,6 +19,9 @@ class MainScreenView extends StatefulWidget {
 class _MainScreenViewState extends State<MainScreenView> {
   final TextEditingController _searchController = TextEditingController();
   bool _isInitialized = false;
+
+  // Tag dialog controller
+  final TextEditingController _tagController = TextEditingController();
 
   @override
   void didChangeDependencies() {
@@ -53,6 +57,105 @@ class _MainScreenViewState extends State<MainScreenView> {
     'tracks': 'Tracks',
     'tags': 'Tags',
   };
+
+  Widget _buildTagAutocomplete(List<String> distinctTags) {
+    return Autocomplete<String>(
+      optionsBuilder: (TextEditingValue val) {
+        if (val.text.isEmpty) return const Iterable.empty();
+        final lower = val.text.toLowerCase();
+        return distinctTags
+            .where((a) => a.toLowerCase().contains(lower))
+            .toList()
+          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      },
+      onSelected: (selection) => _tagController.text = selection,
+      fieldViewBuilder: (ctx, ctrl, focus, onSubmit) {
+        ctrl.text = _tagController.text;
+        ctrl.selection = _tagController.selection;
+        ctrl.addListener(() {
+          _tagController.text = ctrl.text;
+          _tagController.selection = ctrl.selection;
+        });
+        return TextField(
+          controller: ctrl,
+          focusNode: focus,
+          decoration: const InputDecoration(border: OutlineInputBorder()),
+          maxLength: 255,
+        );
+      },
+    );
+  }
+  
+  // Display Add Tag dialog per spec (centered). On OK: persist tag immediately and update album.tagSummary.
+  Future<void> _showAddTagDialog(String albumId, AlbumProvider albumProv) async {
+    final tagProv = Provider.of<TagProvider>(context, listen: false);
+    tagProv.loadTagsForAlbum(albumId);
+    final List<String> distinctTags = await tagProv.getDistinctTagList();
+
+    _tagController.clear();
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        return Dialog(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 600
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Add Tag', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  _buildTagAutocomplete(distinctTags),
+                  const SizedBox(height: 12),
+                  Row(
+                    //crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.of(ctx).pop();
+                          },
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final text = _tagController.text;
+                            if (text.trim().isEmpty) {
+                              Navigator.of(ctx).pop();
+                              return;
+                            }
+
+                            // Per spec: case-sensitive duplicate check
+                            final existing = tagProv.tags;
+                            final alreadyExists = existing.any((t) => t.tag == text);
+                            if (!alreadyExists) {
+                              final tag = Tag(id: null, albumId: albumId, tag: text);
+                              await tagProv.addTag(tag); // persists immediately
+                              albumProv.fetchAllAlbums();
+                            }
+                            Navigator.of(ctx).pop();
+                            if (mounted) setState(() {});
+                          },
+                          child: const Text('OK'),
+                        ),
+                      )
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          )
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -159,24 +262,7 @@ class _MainScreenViewState extends State<MainScreenView> {
 
             // Albums list
             Expanded(
-      child: /* FutureBuilder<List<Album>>(
-        future: provider.getAllAlbums(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-
-          final albums = snapshot.data ?? [];
-
-          if (albums.isEmpty) {
-            return const Center(child: Text('No albums found.'));
-          }
-
-          return*/ ListView.builder(
+      child: ListView.builder(
             itemCount: provider.albums.length, //albums.length,
             itemBuilder: (context, index) {
               final album = provider.albums[index]; //albums[index];
@@ -189,13 +275,13 @@ class _MainScreenViewState extends State<MainScreenView> {
                     ),
                   );
                 },
-                child: AlbumCard(album: album),
+                child: AlbumCard(album: album, onAddTagPressed: () => {
+                  _showAddTagDialog(album.id, provider)
+                }),
               );
             },
-          )/*;
-        },
-      ),*/
-            ),
+          )
+          ),
           ],
         )
       ),

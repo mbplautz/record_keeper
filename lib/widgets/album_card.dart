@@ -10,8 +10,9 @@ import 'package:provider/provider.dart';
 
 class AlbumCard extends StatelessWidget {
   final Album album;
+  final VoidCallback onAddTagPressed;
 
-  const AlbumCard({super.key, required this.album});
+  const AlbumCard({super.key, required this.album, required this.onAddTagPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -21,23 +22,23 @@ class AlbumCard extends StatelessWidget {
     // Defines the action pane when swiping left
     endActionPane: ActionPane(
       motion: const StretchMotion(),
-      extentRatio: 0.5, // 50% of the item width (adjust as needed)
+      //extentRatio: 0.5, // 50% of the item width (adjust as needed)
+      dismissible: DismissiblePane(
+        confirmDismiss: () async {
+          // Default action when fully swiped
+          Navigator.of(context).push(
+            //context,
+            MaterialPageRoute(
+              builder: (_) => AlbumDetailsView(albumId: album.id),
+            ),
+          );
+          return false;
+        },
+        onDismissed: () => {},
+        closeOnCancel: true,
+        //confirmDismiss: () async => false,
+      ),
       children: [
-        SlidableAction(
-          onPressed: (_) {
-            // Default option: open album details
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => AlbumDetailsView(albumId: album.id),
-              ),
-            );
-          },
-          backgroundColor: Colors.blue,
-          foregroundColor: Colors.white,
-          icon: Icons.info,
-          label: 'View',
-        ),
         SlidableAction(
           onPressed: (ctx) async {
             final albumProv = ctx.read<AlbumProvider>();
@@ -102,6 +103,29 @@ class AlbumCard extends StatelessWidget {
           foregroundColor: Colors.white,
           icon: Icons.delete,
           label: 'Delete',
+        ),
+        SlidableAction(
+          onPressed: (_) => onAddTagPressed.call(),
+          backgroundColor: Colors.purple,
+          foregroundColor: Colors.white,
+          icon: Icons.comment,
+          label: 'Add Tag',
+        ),
+        SlidableAction(
+          onPressed: (_) {
+            // Default option: open album details
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AlbumDetailsView(albumId: album.id),
+              ),
+            );
+          },
+          backgroundColor: Colors.blue,
+          foregroundColor: Colors.white,
+          icon: Icons.info,
+          label: 'View',
+          autoClose: true,
         ),
       ],
     ),
