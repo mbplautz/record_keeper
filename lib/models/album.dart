@@ -20,6 +20,9 @@ class Album {
   List<Track> tracks;
   List<Tag> tags;
 
+  // Calculated field not persisted in the database
+  String? headerKey;
+
   Album({
     required this.id,
     required this.title,

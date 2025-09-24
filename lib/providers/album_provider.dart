@@ -260,23 +260,35 @@ class AlbumProvider extends ChangeNotifier {
     switch (option) {
       case SortOption.artistThenYear:
         sorted.sort((a, b) {
-          final artistComp = ciCompare(a.artist, b.artist);
+          final artistComp = ciCompare(a.sortArtist ?? a.artist, b.sortArtist ?? b.artist);
           if (artistComp != 0) return artistComp;
           return (_constructReleaseDate(a)).compareTo(_constructReleaseDate(b));
         });
+        for (var album in sorted) {
+          album.headerKey = (album.sortArtist ?? album.artist)[0].toUpperCase();
+        }
         break;
       case SortOption.artistThenAlpha:
         sorted.sort((a, b) {
-          final artistComp = ciCompare(a.artist, b.artist);
+          final artistComp = ciCompare(a.sortArtist ?? a.artist, b.sortArtist ?? b.artist);
           if (artistComp != 0) return artistComp;
           return ciCompare(a.title, b.title);
         });
+        for (var album in sorted) {
+          album.headerKey = (album.sortArtist ?? album.artist)[0].toUpperCase();
+        }
         break;
       case SortOption.albumAlpha:
         sorted.sort((a, b) => ciCompare(a.title, b.title));
+        for (var album in sorted) {
+          album.headerKey = album.title[0].toUpperCase();
+        }
         break;
       case SortOption.releaseYear:
         sorted.sort((a, b) => (_constructReleaseDate(a)).compareTo(_constructReleaseDate(b)));
+        for (var album in sorted) {
+          album.headerKey = _constructReleaseDate(album).year.toString();
+        }
         break;
       case SortOption.random:
         sorted.shuffle();

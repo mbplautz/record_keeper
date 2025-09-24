@@ -2,7 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sticky_grouped_list/sticky_grouped_list.dart';
 
+import '../models/album.dart';
 import '../models/tag.dart';
 import '../providers/album_provider.dart';
 import '../providers/tag_provider.dart';
@@ -157,9 +159,52 @@ class _MainScreenViewState extends State<MainScreenView> {
     );
   }
 
+  Widget _buildStickyList(List<Album> albums, AlbumProvider provider) {
+    return StickyGroupedListView<Album, String>(
+      elements: albums,
+      groupBy: (album) => album.headerKey ?? '',
+      groupSeparatorBuilder: (Album album) {
+        final header = album.headerKey ?? '';
+        return Container(
+          width: double.infinity,
+          color: Colors.grey[200],
+          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
+          child: Text(
+            header,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          ),
+        );
+      },
+      itemBuilder: (context, Album album) {
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AlbumDetailsView(albumId: album.id),
+              ),
+            );
+          },
+          child: AlbumCard(album: album, onAddTagPressed: () => {
+            _showAddTagDialog(album.id, provider)
+          }),
+        );
+      },
+      // Since sorting is already done in provider:
+      itemComparator: (a, b) => 0,
+      groupComparator: (a, b) => a.compareTo(b),
+      order: StickyGroupedListOrder.ASC,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<AlbumProvider>(context);
+
+    final needsSticky = provider.sortOption == SortOption.artistThenYear 
+      || provider.sortOption == SortOption.artistThenAlpha
+      || provider.sortOption == SortOption.albumAlpha
+      || provider.sortOption == SortOption.releaseYear;
 
     return Scaffold(
             // Section 2.2.1.1 - Title Banner
@@ -213,7 +258,7 @@ class _MainScreenViewState extends State<MainScreenView> {
 
                   // Search Settings Popup Menu
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.search),
+                    icon: const Icon(Icons.filter_alt),
                     onSelected: (key) {
                       final updated = Map<String, bool>.from(provider.searchFields);
                       final checkedItems = updated.values.where((v) => v).length;
@@ -244,7 +289,10 @@ class _MainScreenViewState extends State<MainScreenView> {
 
                   // Sort Settings Popup Menu
                   PopupMenuButton<SortOption>(
-                    icon: const Icon(Icons.sort),
+                    icon: Transform.rotate(
+                      angle: 1.570796,
+                      child: Icon(Icons.sync_alt),
+                    ),
                     onSelected: (option) {
                       provider.setSortOption(option);
                     },
@@ -262,7 +310,7 @@ class _MainScreenViewState extends State<MainScreenView> {
 
             // Albums list
             Expanded(
-      child: ListView.builder(
+      child: needsSticky ? _buildStickyList(provider.albums, provider) : ListView.builder(
             itemCount: provider.albums.length, //albums.length,
             itemBuilder: (context, index) {
               final album = provider.albums[index]; //albums[index];
