@@ -8,8 +8,7 @@ CREATE TABLE albums (
   release_day INTEGER,
   wiki_url TEXT,
   cover_image_path TEXT,
-  cover_thumbnail_path TEXT,
-  tag_summary TEXT
+  cover_thumbnail_path TEXT
 );
 
 CREATE INDEX idx_albums_title ON albums(title COLLATE NOCASE);

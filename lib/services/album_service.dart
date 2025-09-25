@@ -46,7 +46,6 @@ class AlbumService {
       releaseDay: album.releaseDay,
       coverImagePath: coverPath,
       coverThumbnailPath: thumbPath,
-      tagSummary: album.tagSummary,
       tracks: album.tracks,
       tags: album.tags,
     );
@@ -97,45 +96,17 @@ class AlbumService {
     await albumRepository.deleteAlbum(albumId);
   }
 
-  /// Add a tag to an album and update the tagSummary.
+  /// Add a tag to an album
   Future<void> addTag(Tag tag) async {
     await tagRepository.insertTag(tag);
-
-    final tags = await tagRepository.getTagsByAlbumId(tag.albumId);
-    final summary = _generateTagSummary(tags);
-
-    final album = await albumRepository.getAlbumById(tag.albumId);
-    if (album != null) {
-      final updated = album.copyWith(tagSummary: summary);
-      await albumRepository.updateAlbum(updated);
-    }
   }
 
-  /// Remove a tag and update the tagSummary.
+  /// Remove a tag
   Future<void> removeTag(Tag tag) async {
     if (tag.id != null) {
       await tagRepository.deleteTag(tag.id!);
     }
 
-    final tags = await tagRepository.getTagsByAlbumId(tag.albumId);
-    final summary = _generateTagSummary(tags);
-
-    final album = await albumRepository.getAlbumById(tag.albumId);
-    if (album != null) {
-      final updated = album.copyWith(tagSummary: summary);
-      await albumRepository.updateAlbum(updated);
-    }
-  }
-
-  /// Private: build a semicolon-separated tag summary, max 255 chars.
-  String _generateTagSummary(List<Tag> tags) {
-    final joined = tags.map((t) => _escapeTag(t.tag)).join('; ');
-    return joined.length > 255 ? joined.substring(0, 255) : joined;
-  }
-
-  /// Escape semicolons (so they don’t conflict with the separator).
-  String _escapeTag(String tag) {
-    return tag.replaceAll(';', r'\;');
   }
 }
 
@@ -149,7 +120,6 @@ extension AlbumCopyWith on Album {
     int? releaseDay,
     String? coverImagePath,
     String? coverThumbnailPath,
-    String? tagSummary,
     List<Track>? tracks,
     List<Tag>? tags,
   }) {
@@ -163,7 +133,6 @@ extension AlbumCopyWith on Album {
       releaseDay: releaseDay ?? this.releaseDay,
       coverImagePath: coverImagePath ?? this.coverImagePath,
       coverThumbnailPath: coverThumbnailPath ?? this.coverThumbnailPath,
-      tagSummary: tagSummary ?? this.tagSummary,
       tracks: tracks ?? this.tracks,
       tags: tags ?? this.tags,
     );

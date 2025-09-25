@@ -14,7 +14,6 @@ class Migrations {
       release_date_month INTEGER,
       release_date_day INTEGER,
       cover_path TEXT NOT NULL
-      tag_summary TEXT NOT NULL
     );
     ''',
 

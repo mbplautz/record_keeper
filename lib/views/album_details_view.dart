@@ -110,7 +110,6 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
         coverThumbnailPath: null,
         tracks: [],
         tags: [],
-        tagSummary: null,
       );
       // Clear tags when adding new
       _tagProv.clearTags();
@@ -345,7 +344,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
     }
   }
 
-  // Display Add Tag dialog per spec (centered). On OK: persist tag immediately and update album.tagSummary.
+  // Display Add Tag dialog per spec (centered). On OK: persist tag immediately.
   Future<void> _showAddTagDialog() async {
     _tagController.clear();
     await showDialog<void>(
@@ -394,26 +393,6 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                               final tag = Tag(id: null, albumId: _album!.id, tag: text);
                               await _tagProv.addTag(tag); // persists immediately
                               _dirtyTags = true;
-/*                              // recompute summary and update album
-                              final tagsNow = _tagProv.tags;
-                              final summary = tagsNow.map((t) => _escapeTag(t.tag)).join('; ');
-                              final updatedAlbum = Album(
-                                id: _album!.id,
-                                title: _titleController.text.trim(),
-                                artist: _artistController.text.trim(),
-                                sortArtist: _sortArtistController.text.trim().isEmpty ? null : _sortArtistController.text.trim(),
-                                releaseYear: _yearController.text.trim().isEmpty ? null : int.parse(_yearController.text.trim()),
-                                releaseMonth: _monthSelected == 0 ? null : _monthSelected,
-                                releaseDay: _dayController.text.trim().isEmpty ? null : int.parse(_dayController.text.trim()),
-                                wikiUrl: _wikiController.text.trim().isEmpty ? null : _wikiController.text.trim(),
-                                coverImagePath: _album!.coverImagePath,
-                                coverThumbnailPath: _album!.coverThumbnailPath,
-                                tracks: _album!.tracks,
-                                tags: _tagProv.tags,
-                                tagSummary: summary,
-                              );
-                              await _albumProv.updateAlbum(updatedAlbum);
-                              _album = updatedAlbum;*/
                             }
                             Navigator.of(ctx).pop();
                             if (mounted) setState(() {});
@@ -432,33 +411,11 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
     );
   }
 
-  String _escapeTag(String tag) => tag.replaceAll(';', r'\;');
-
   // Remove a tag immediately (persisted)
   Future<void> _removeTag(Tag tag) async {
     if (tag.id == null) return;
     await _tagProv.deleteTag(tag.id!);
     _dirtyTags = true;
-/*    // recompute tagSummary and update album
-    final tagsNow = _tagProv.tags;
-    final summary = tagsNow.map((t) => _escapeTag(t.tag)).join('; ');
-    final updatedAlbum = Album(
-      id: _album!.id,
-      title: _titleController.text.trim(),
-      artist: _artistController.text.trim(),
-      sortArtist: _sortArtistController.text.trim().isEmpty ? null : _sortArtistController.text.trim(),
-      releaseYear: _yearController.text.trim().isEmpty ? null : int.tryParse(_yearController.text.trim()),
-      releaseMonth: _monthSelected == 0 ? null : _monthSelected,
-      releaseDay: _dayController.text.trim().isEmpty ? null : int.tryParse(_dayController.text.trim()),
-      wikiUrl: _wikiController.text.trim().isEmpty ? null : _wikiController.text.trim(),
-      coverImagePath: _album!.coverImagePath,
-      coverThumbnailPath: _album!.coverThumbnailPath,
-      tracks: _album!.tracks,
-      tags: tagsNow,
-      tagSummary: summary,
-    );
-    await _albumProv.updateAlbum(updatedAlbum);
-    _album = updatedAlbum;*/
     if (mounted) setState(() {});
   }
 
@@ -510,7 +467,6 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
       coverThumbnailPath: thumbPath,
       tracks: _localTracks.map((t) => Track(id: null, albumId: _album!.id, title: t)).toList(),
       tags: _tagProv.tags,
-      tagSummary: _tagProv.tags.map((t) => _escapeTag(t.tag)).join('; '),
     );
 
     if (_isNew) {

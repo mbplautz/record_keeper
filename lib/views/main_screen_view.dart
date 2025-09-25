@@ -88,7 +88,7 @@ class _MainScreenViewState extends State<MainScreenView> {
     );
   }
   
-  // Display Add Tag dialog per spec (centered). On OK: persist tag immediately and update album.tagSummary.
+  // Display Add Tag dialog per spec (centered). On OK: persist tag immediately.
   Future<void> _showAddTagDialog(String albumId, AlbumProvider albumProv) async {
     final tagProv = Provider.of<TagProvider>(context, listen: false);
     tagProv.loadTagsForAlbum(albumId);

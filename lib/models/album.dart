@@ -15,7 +15,6 @@ class Album {
   String? wikiUrl;
   String? coverImagePath;
   String? coverThumbnailPath;
-  String? tagSummary;
 
   List<Track> tracks;
   List<Tag> tags;
@@ -34,7 +33,6 @@ class Album {
     this.wikiUrl,
     this.coverImagePath,
     this.coverThumbnailPath,
-    this.tagSummary,
     this.tracks = const [],
     this.tags = const [],
   });
@@ -51,8 +49,7 @@ class Album {
       'release_day': releaseDay,
       'wiki_url': wikiUrl,
       'cover_image_path': coverImagePath,
-      'cover_thumbnail_path': coverThumbnailPath,
-      'tag_summary': tagSummary
+      'cover_thumbnail_path': coverThumbnailPath
     };
   }
 
@@ -70,7 +67,6 @@ class Album {
       wikiUrl: map['wiki_url'] as String?,
       coverImagePath: map['cover_image_path'] as String?,
       coverThumbnailPath: map['cover_thumbnail_path'] as String?,
-      tagSummary: map['tag_summary'] as String,
       tracks: tracks,
       tags: tags,
     );
@@ -88,7 +84,6 @@ class Album {
         'wikiUrl': wikiUrl,
         'coverImagePath': coverImagePath,
         'coverThumbnailPath': coverThumbnailPath,
-        'tagSummary': tagSummary,
         'tracks': tracks.map((t) => t.toMap()).toList(),
         'tags': tags.map((t) => t.toMap()).toList(),
       });
@@ -107,7 +102,6 @@ class Album {
       wikiUrl: data['wikiUrl'],
       coverImagePath: data['coverImagePath'],
       coverThumbnailPath: data['coverThumbnailPath'],
-      tagSummary: data['tagSummary'],
       tracks: (data['tracks'] as List<dynamic>)
           .map((t) => Track.fromMap(Map<String, dynamic>.from(t)))
           .toList(),

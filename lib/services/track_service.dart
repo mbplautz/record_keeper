@@ -61,7 +61,6 @@ extension AlbumCopyWith on Album {
     int? releaseDay,
     String? coverImagePath,
     String? coverThumbnailPath,
-    String? tagSummary,
     List<Track>? tracks,
     List<Tag>? tags,
   }) {
@@ -75,7 +74,6 @@ extension AlbumCopyWith on Album {
       releaseDay: releaseDay ?? this.releaseDay,
       coverImagePath: coverImagePath ?? this.coverImagePath,
       coverThumbnailPath: coverThumbnailPath ?? this.coverThumbnailPath,
-      tagSummary: tagSummary ?? this.tagSummary,
       tracks: tracks ?? this.tracks,
       tags: tags ?? this.tags,
     );

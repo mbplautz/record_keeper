@@ -15,7 +15,7 @@ class TagService {
     required this.albumRepository,
   });
 
-  /// Add a new tag and update the album’s tags + tagSummary.
+  /// Add a new tag and update the album’s tags
   Future<void> addTag(Tag tag) async {
     await tagRepository.insertTag(tag);
 
@@ -24,13 +24,13 @@ class TagService {
       final updatedTags = [...album.tags, tag];
       final updatedAlbum = album.copyWith(
         tags: updatedTags,
-        // tagSummary should be updated by higher-level controller/service
+        
       );
       await albumRepository.updateAlbum(updatedAlbum);
     }
   }
 
-  /// Delete a tag and update the album’s tags + tagSummary.
+  /// Delete a tag and update the album’s tags
   Future<void> deleteTag(Tag tag) async {
     if (tag.id == null) return;
 
@@ -41,7 +41,7 @@ class TagService {
       final updatedTags = album.tags.where((id) => id != tag.id).toList();
       final updatedAlbum = album.copyWith(
         tags: updatedTags,
-        // tagSummary should be updated by higher-level controller/service
+        
       );
       await albumRepository.updateAlbum(updatedAlbum);
     }
@@ -58,7 +58,6 @@ extension AlbumCopyWith on Album {
     int? releaseDay,
     String? coverImagePath,
     String? coverThumbnailPath,
-    String? tagSummary,
     List<Track>? tracks,
     List<Tag>? tags,
   }) {
@@ -72,7 +71,6 @@ extension AlbumCopyWith on Album {
       releaseDay: releaseDay ?? this.releaseDay,
       coverImagePath: coverImagePath ?? this.coverImagePath,
       coverThumbnailPath: coverThumbnailPath ?? this.coverThumbnailPath,
-      tagSummary: tagSummary ?? this.tagSummary,
       tracks: tracks ?? this.tracks,
       tags: tags ?? this.tags,
     );
