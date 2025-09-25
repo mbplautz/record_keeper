@@ -17,7 +17,7 @@ class AlbumDetailsView extends StatefulWidget {
   /// If albumId is null, this view is creating a new album (starts in edit mode).
   final String? albumId;
 
-  const AlbumDetailsView({Key? key, this.albumId}) : super(key: key);
+  const AlbumDetailsView({super.key, this.albumId});
 
   @override
   State<AlbumDetailsView> createState() => _AlbumDetailsViewState();
@@ -28,6 +28,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
   late bool _isNew;
   bool _isEditMode = false;
   bool _startedInViewMode = false;
+  bool _dirtyTags = false;
 
   // Album in-memory
   Album? _album;
@@ -219,7 +220,10 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
       // view mode -> left arrow to navigate back
       return IconButton(
         icon: const Icon(Icons.arrow_back),
-        onPressed: () => Navigator.of(context).pop(),
+        onPressed: () async {
+          if (_dirtyTags) await _albumProv.fetchAllAlbums(); // Reload album model (with tags) if tags changed
+          if (mounted) Navigator.of(context).pop();
+        }
       );
     }
   }
@@ -389,7 +393,8 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                             if (!alreadyExists) {
                               final tag = Tag(id: null, albumId: _album!.id, tag: text);
                               await _tagProv.addTag(tag); // persists immediately
-                              // recompute summary and update album
+                              _dirtyTags = true;
+/*                              // recompute summary and update album
                               final tagsNow = _tagProv.tags;
                               final summary = tagsNow.map((t) => _escapeTag(t.tag)).join('; ');
                               final updatedAlbum = Album(
@@ -408,7 +413,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                                 tagSummary: summary,
                               );
                               await _albumProv.updateAlbum(updatedAlbum);
-                              _album = updatedAlbum;
+                              _album = updatedAlbum;*/
                             }
                             Navigator.of(ctx).pop();
                             if (mounted) setState(() {});
@@ -433,7 +438,8 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
   Future<void> _removeTag(Tag tag) async {
     if (tag.id == null) return;
     await _tagProv.deleteTag(tag.id!);
-    // recompute tagSummary and update album
+    _dirtyTags = true;
+/*    // recompute tagSummary and update album
     final tagsNow = _tagProv.tags;
     final summary = tagsNow.map((t) => _escapeTag(t.tag)).join('; ');
     final updatedAlbum = Album(
@@ -452,7 +458,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
       tagSummary: summary,
     );
     await _albumProv.updateAlbum(updatedAlbum);
-    _album = updatedAlbum;
+    _album = updatedAlbum;*/
     if (mounted) setState(() {});
   }
 
