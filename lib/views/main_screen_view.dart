@@ -160,7 +160,12 @@ class _MainScreenViewState extends State<MainScreenView> {
   }
 
   Widget _buildStickyList(List<Album> albums, AlbumProvider provider) {
+    if (albums.isEmpty) {
+      return const Center(child: Text('No albums found'));
+    }
+
     return StickyGroupedListView<Album, String>(
+      key: ValueKey(provider.currentSearch),
       elements: albums,
       groupBy: (album) => album.headerKey ?? '',
       groupSeparatorBuilder: (Album album) {
