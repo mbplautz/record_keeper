@@ -50,11 +50,11 @@ class MyApp extends StatelessWidget {
   final TagRepository tagRepository;
 
   const MyApp({
-    Key? key,
+    super.key,
     required this.albumRepository,
     required this.trackRepository,
     required this.tagRepository,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
