@@ -3,11 +3,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sticky_grouped_list/sticky_grouped_list.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../models/album.dart';
 import '../models/tag.dart';
 import '../providers/album_provider.dart';
 import '../providers/tag_provider.dart';
+import '../utils/image_utils.dart';
 import '../widgets/album_card.dart';
 import 'album_details_view.dart';
 
@@ -26,12 +28,13 @@ class _MainScreenViewState extends State<MainScreenView> {
   final TextEditingController _tagController = TextEditingController();
 
   @override
-  void didChangeDependencies() {
+  void didChangeDependencies() async {
     super.didChangeDependencies();
 
     if (!_isInitialized) {
       // Trigger the one-time fetch
       Provider.of<AlbumProvider>(context, listen: false).fetchAllAlbums();
+      ImageUtils.applicationDocumentsDirectory = (await getApplicationDocumentsDirectory()).path;
       _isInitialized = true;
     }
   }
@@ -211,7 +214,13 @@ class _MainScreenViewState extends State<MainScreenView> {
       || provider.sortOption == SortOption.albumAlpha
       || provider.sortOption == SortOption.releaseYear;
 
-    return Scaffold(
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: /*
+    return */Scaffold(
             // Section 2.2.1.1 - Title Banner
       appBar: AppBar(
         title: const Text("Record Keeper"),
@@ -350,6 +359,7 @@ class _MainScreenViewState extends State<MainScreenView> {
         },
         child: const Icon(Icons.add),
       ),
+    )
     );
   }
 }
