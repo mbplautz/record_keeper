@@ -664,6 +664,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
           controller: ctrl,
           focusNode: focus,
           decoration: const InputDecoration(border: OutlineInputBorder()),
+          textCapitalization: TextCapitalization.words,
           maxLength: 255,
         );
       },
@@ -691,6 +692,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
           controller: ctrl,
           focusNode: focus,
           decoration: const InputDecoration(border: OutlineInputBorder()),
+          textCapitalization: TextCapitalization.words,
           maxLength: 255,
         );
       },
@@ -755,7 +757,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                         _buildDetailField(
                           'Album name *',
                           _isEditMode
-                              ? TextField(controller: _titleController, maxLength: 255)
+                              ? TextField(controller: _titleController, textCapitalization: TextCapitalization.words, maxLength: 255)
                               : Text(_album!.title.isNotEmpty ? _album!.title : '-', style: Theme.of(context).textTheme.bodyLarge),
                         ),
                         _buildDetailField(
@@ -804,6 +806,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                                           child: TextField(
                                             controller: _editTrackController,
                                             decoration: const InputDecoration(hintText: 'Edit track'),
+                                            textCapitalization: TextCapitalization.words,
                                             maxLength: 255,
                                           ),
                                         ),
@@ -854,6 +857,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                                       child: TextField(
                                         controller: _newTrackController,
                                         decoration: const InputDecoration(hintText: 'Add new track'),
+                                        textCapitalization: TextCapitalization.words,
                                         maxLength: 255,
                                         onSubmitted: (_) => _onAddTrack(),
                                         enabled: _editingTrackIndex == null
