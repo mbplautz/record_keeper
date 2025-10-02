@@ -3,12 +3,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 class ImageUtils {
   static final ImagePicker _picker = ImagePicker();
+  static final ImageCropper _cropper = ImageCropper();
   static String applicationDocumentsDirectory = '';
 
   /// Pick an image from the gallery or camera.
@@ -18,8 +20,29 @@ class ImageUtils {
       source: fromCamera ? ImageSource.camera : ImageSource.gallery,
       imageQuality: 90, // compress a little on pick
     );
+    
     if (pickedFile == null) return null;
-    return File(pickedFile.path);
+    final croppedFile = await _cropper.cropImage(
+      sourcePath: pickedFile.path,
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+//      compressQuality: 90,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop Image',
+//          toolbarColor: Colors.deepPurple,
+//          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.square,
+          lockAspectRatio: true,
+        ),
+        IOSUiSettings(
+          title: 'Crop Image',
+          aspectRatioLockEnabled: true,
+        ),
+      ],
+    );
+
+    if (croppedFile == null) return null;
+    return File(croppedFile.path);
   }
 
   /// Save an image to the app's documents directory.
