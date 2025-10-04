@@ -22,14 +22,14 @@ class AlbumCard extends StatelessWidget {
     // Defines the action pane when swiping left
     endActionPane: ActionPane(
       motion: const StretchMotion(),
-      //extentRatio: 0.5, // 50% of the item width (adjust as needed)
+      extentRatio: 0.8, // 80% of the item width (adjust as needed)
       dismissible: DismissiblePane(
         confirmDismiss: () async {
           // Default action when fully swiped
           Navigator.of(context).push(
             //context,
             MaterialPageRoute(
-              builder: (_) => AlbumDetailsView(albumId: album.id),
+              builder: (_) => AlbumDetailsView(albumId: album.id, editMode: true,),
             ),
           );
           return false;
@@ -109,7 +109,7 @@ class AlbumCard extends StatelessWidget {
           backgroundColor: Colors.purple,
           foregroundColor: Colors.white,
           icon: Icons.comment,
-          label: 'Add Tag',
+          label: 'Tag',
         ),
         SlidableAction(
           onPressed: (_) {
@@ -117,14 +117,14 @@ class AlbumCard extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => AlbumDetailsView(albumId: album.id),
+                builder: (_) => AlbumDetailsView(albumId: album.id, editMode: true),
               ),
             );
           },
           backgroundColor: Colors.blue,
           foregroundColor: Colors.white,
-          icon: Icons.info,
-          label: 'View',
+          icon: Icons.edit,
+          label: 'Edit',
           autoClose: true,
         ),
       ],

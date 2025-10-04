@@ -16,8 +16,9 @@ import '../utils/image_utils.dart';
 class AlbumDetailsView extends StatefulWidget {
   /// If albumId is null, this view is creating a new album (starts in edit mode).
   final String? albumId;
+  final bool editMode;
 
-  const AlbumDetailsView({super.key, this.albumId});
+  const AlbumDetailsView({super.key, this.albumId, this.editMode = false});
 
   @override
   State<AlbumDetailsView> createState() => _AlbumDetailsViewState();
@@ -73,8 +74,8 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
   void initState() {
     super.initState();
     _isNew = widget.albumId == null;
-    _isEditMode = _isNew;
-    _startedInViewMode = !_isNew;
+    _isEditMode = _isNew || widget.editMode;
+    _startedInViewMode = !_isNew && !widget.editMode;
 
     // Form validation: watch text controllers
     _isFormValidNotifier = ValueNotifier<bool>(_isFormValid());

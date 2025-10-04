@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sticky_grouped_list/sticky_grouped_list.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../models/album.dart';
@@ -11,6 +10,7 @@ import '../providers/album_provider.dart';
 import '../providers/tag_provider.dart';
 import '../utils/image_utils.dart';
 import '../widgets/album_card.dart';
+import '../widgets/grouped_sticky_album_list.dart';
 import 'album_details_view.dart';
 
 class MainScreenView extends StatefulWidget {
@@ -22,6 +22,7 @@ class MainScreenView extends StatefulWidget {
 
 class _MainScreenViewState extends State<MainScreenView> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   bool _isInitialized = false;
 
   // Tag dialog controller
@@ -167,41 +168,14 @@ class _MainScreenViewState extends State<MainScreenView> {
       return const Center(child: Text('No albums found'));
     }
 
-    return StickyGroupedListView<Album, String>(
-      key: ValueKey(provider.currentSearch),
-      elements: albums,
-      groupBy: (album) => album.headerKey ?? '',
-      groupSeparatorBuilder: (Album album) {
-        final header = album.headerKey ?? '';
-        return Container(
-          width: double.infinity,
-          color: Colors.grey[200],
-          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
-          child: Text(
-            header,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-          ),
-        );
-      },
-      itemBuilder: (context, Album album) {
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => AlbumDetailsView(albumId: album.id),
-              ),
-            );
-          },
-          child: AlbumCard(album: album, onAddTagPressed: () => {
-            _showAddTagDialog(album.id, provider)
-          }),
-        );
-      },
-      // Since sorting is already done in provider:
-      itemComparator: (a, b) => 0,
-      groupComparator: (a, b) => a.compareTo(b),
-      order: StickyGroupedListOrder.ASC,
+    return StickyGroupedAlbumList(
+      albums: provider.albums,
+      itemBuilder: (ctx, album) => SizedBox(
+        height: 104.0,
+        child: AlbumCard(album: album, onAddTagPressed: () => {
+                  _showAddTagDialog(album.id, provider)
+        }),
+      ),
     );
   }
 
@@ -323,8 +297,10 @@ class _MainScreenViewState extends State<MainScreenView> {
             ),
 
             // Albums list
+            
             Expanded(
-      child: needsSticky ? _buildStickyList(provider.albums, provider) : ListView.builder(
+          child: needsSticky ? _buildStickyList(provider.albums, provider) : Scrollbar(thumbVisibility: false, interactive: true, controller: _scrollController, child: ListView.builder(
+            controller: _scrollController,
             itemCount: provider.albums.length, //albums.length,
             itemBuilder: (context, index) {
               final album = provider.albums[index]; //albums[index];
@@ -343,7 +319,7 @@ class _MainScreenViewState extends State<MainScreenView> {
               );
             },
           )
-          ),
+          )),
           ],
         )
       ),

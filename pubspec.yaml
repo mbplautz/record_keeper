@@ -52,7 +52,7 @@ dependencies:
 
   # UI Enhancement for the Main Screen View
   flutter_slidable: ^4.0.1
-  sticky_grouped_list: ^3.1.0
+  flutter_sticky_header: ^0.8.0
 
 dev_dependencies:
   flutter_test:
