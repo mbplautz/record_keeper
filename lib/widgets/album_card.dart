@@ -181,7 +181,7 @@ class AlbumCard extends StatelessWidget {
                   ),
                   if (album.tags.isNotEmpty)
                   SizedBox(
-                    height: 32, // height of one tag row
+                    height: 24, // height of one tag row
                     child: ClipRect(
                       child: Wrap(
                         spacing: 8,
@@ -189,12 +189,12 @@ class AlbumCard extends StatelessWidget {
                         children: [
                           for (final tag in album.tags)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                               decoration: BoxDecoration(
                                 color: Theme.of(context).primaryColor,
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Text(tag.tag, style: const TextStyle(color: Colors.white)),
+                              child: Text(tag.tag, style: const TextStyle(color: Colors.white, fontSize: 8.0)),
                             ),
                         ],
                       ),

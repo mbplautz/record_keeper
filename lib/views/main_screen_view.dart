@@ -171,10 +171,20 @@ class _MainScreenViewState extends State<MainScreenView> {
     return StickyGroupedAlbumList(
       albums: provider.albums,
       itemBuilder: (ctx, album) => SizedBox(
-        height: 104.0,
-        child: AlbumCard(album: album, onAddTagPressed: () => {
+        height: 96.0,
+        child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AlbumDetailsView(albumId: album.id),
+                    ),
+                  );
+                },
+                child: AlbumCard(album: album, onAddTagPressed: () => {
                   _showAddTagDialog(album.id, provider)
-        }),
+                }),
+              ),
       ),
     );
   }
