@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/album.dart';
 import '../models/track.dart';
@@ -781,7 +782,31 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                           'Album Wikipedia Page',
                           _isEditMode
                               ? TextField(controller: _wikiController, maxLength: 255)
-                              : Text(_album!.wikiUrl ?? '-', style: Theme.of(context).textTheme.bodyLarge),
+                              : //Text(_album!.wikiUrl ?? '-', style: Theme.of(context).textTheme.bodyLarge),
+                              (_album!.wikiUrl != null && (_album!.wikiUrl?.indexOf('http://') == 0 || _album!.wikiUrl?.indexOf('https://') == 0)) ?
+                                InkWell(
+                                  onTap: () async {
+                                    final uri = Uri.parse(_album!.wikiUrl ?? '-');
+                                    if (await canLaunchUrl(uri)) {
+                                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                    }
+                                  },
+                                  child: Text(
+                                    _album!.wikiUrl ?? '-',
+                                    style: const TextStyle(
+                                      color: Colors.blue,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                )
+                              :
+                                (_album!.wikiUrl != null && _album!.wikiUrl!.isNotEmpty) ? Text (
+                                    _album!.wikiUrl ?? '-',
+                                    style: const TextStyle(
+                                      color: Colors.black,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                ) : Text('-'),
                         ),
 
                         // Track Listing
