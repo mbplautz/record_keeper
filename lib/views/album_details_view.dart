@@ -55,6 +55,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
 
   // Temp picked image file (not yet saved to app storage).
   File? _pickedImageFile;
+  bool _deletedImage = false;
 
   // Tag dialog controller
   final TextEditingController _tagController = TextEditingController();
@@ -430,6 +431,21 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
     });
   }
 
+  Future<void> _onDeleteImage() async {
+    if (_pickedImageFile != null) {
+      setState(() {
+        _pickedImageFile = null;
+      });
+    }
+    else if (_album != null && _album!.coverImagePath != null) {
+      if (mounted) {
+        setState(() {
+          _deletedImage = true;
+        });
+      }
+    }
+  }
+
   // Save album metadata + images + tracks
   Future<void> _saveAlbum() async {
     if (_album == null) return;
@@ -453,6 +469,14 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
 
       coverPath = await ImageUtils.saveImage(_pickedImageFile!, filename: '${_album!.id}_cover.jpg');
       thumbPath = await ImageUtils.generateThumbnail(_pickedImageFile!, filename: '${_album!.id}_thumb.jpg');
+    }
+    else if (_pickedImageFile == null && _deletedImage) {
+      // User deleted existing image
+      if (coverPath != null) await ImageUtils.deleteImage(coverPath);
+      if (thumbPath != null) await ImageUtils.deleteImage(thumbPath);
+
+      coverPath = null;
+      thumbPath = null;
     }
 
     // Build album object to persist
@@ -495,6 +519,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
 
     // Reset local state
     _pickedImageFile = null;
+    _deletedImage = false;
     if (mounted) setState(() {});
   }
 
@@ -558,7 +583,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
 
     final imageWidget = _pickedImageFile != null
         ? Image.file(File(_pickedImageFile!.path), fit: BoxFit.cover, width: squareSize, height: squareSize)
-        : (_album?.coverImagePath != null
+        : (_album?.coverImagePath != null && !_deletedImage
             ? ImageUtils.loadImageWidget(_album!.coverImagePath, width: squareSize, height: squareSize)
             : Container(
                 width: squareSize,
@@ -622,6 +647,21 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                     }
                   },
                   child: const Icon(Icons.camera_alt, color: Colors.grey),
+                ),
+              ),
+            if (_isEditMode && (_pickedImageFile != null || (_album != null && _album!.coverImagePath != null)))
+              // Top-right delete button
+              Positioned(
+                top: 8,
+                right: 8,
+                child: CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Colors.black54,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    icon: const Icon(Icons.close, color: Colors.white, size: 18),
+                    onPressed: _onDeleteImage,
+                  ),
                 ),
               ),
           ],
