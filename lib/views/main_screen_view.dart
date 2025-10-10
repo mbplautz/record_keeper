@@ -1,5 +1,7 @@
 // lib/views/main_screen_view.dart
 
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
@@ -11,6 +13,7 @@ import '../providers/tag_provider.dart';
 import '../utils/image_utils.dart';
 import '../widgets/album_card.dart';
 import '../widgets/grouped_sticky_album_list.dart';
+import '../widgets/right_side_menu.dart';
 import 'album_details_view.dart';
 
 class MainScreenView extends StatefulWidget {
@@ -24,6 +27,7 @@ class _MainScreenViewState extends State<MainScreenView> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isInitialized = false;
+  bool _menuVisible = false;
 
   // Tag dialog controller
   final TextEditingController _tagController = TextEditingController();
@@ -63,6 +67,8 @@ class _MainScreenViewState extends State<MainScreenView> {
     'tracks': 'Tracks',
     'tags': 'Tags',
   };
+
+  void _toggleMenu() => setState(() => _menuVisible = !_menuVisible);
 
   Widget _buildTagAutocomplete(List<String> distinctTags) {
     return Autocomplete<String>(
@@ -209,8 +215,15 @@ class _MainScreenViewState extends State<MainScreenView> {
       appBar: AppBar(
         title: const Text("Record Keeper"),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: _toggleMenu,
+          ),
+        ],
       ),
-      body: SafeArea(
+      body: Stack(
+        children: [SafeArea(
         child: Column(
           children: [
 /*            // Section 2.2.1.1 - Title Banner
@@ -332,6 +345,31 @@ class _MainScreenViewState extends State<MainScreenView> {
           )),
           ],
         )
+      ),
+          // Slide-in menu overlay
+          //if (_menuVisible)
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeInOutCubic,
+              right: _menuVisible ? 0 : -min(MediaQuery.of(context).size.width, max(MediaQuery.of(context).size.width * 0.5, 300)).toDouble(),
+              top: 0,
+              bottom: 0,
+              child: RightSideMenu(
+                width: min(MediaQuery.of(context).size.width, max(MediaQuery.of(context).size.width * 0.5, 300)),
+                onExportCollection: () => print('Export'),
+                onImportCollection: () => print('Import'),
+                onDeleteCollection: () => print('Delete'),
+                onSaveSearch: () => print('Save search'),
+                onManageSavedSearches: () => print('Manage searches'),
+                onAddTag: () => print('Add tag'),
+                onRemoveTag: () => print('Remove tag'),
+                onRemoveAlbums: () => print('Remove albums'),
+                totalAlbums: provider.albums.length,
+                listedAlbums: provider.albums.length,
+                onClose: _toggleMenu,
+              ),
+            ),
+      ]
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
