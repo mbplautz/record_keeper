@@ -34,45 +34,30 @@ class RightSideMenu extends StatefulWidget {
   State<RightSideMenu> createState() => _RightSideMenuState();
 }
 
-class _RightSideMenuState extends State<RightSideMenu> {
-  final Map<String, bool> _expandedSections = {
-    'My collection': false,
-    'Saved searches': false,
-    'Special actions': false,
-  };
+class _RightSideMenuState extends State<RightSideMenu>
+    with TickerProviderStateMixin {
+  String? _expandedSection;
 
-  void _expandSection(String title, bool isExpanded) {
-    for (var key in _expandedSections.keys) {
-      _expandedSections[key] = false; // collapse all sections
-    }
-    _expandedSections[title] = !isExpanded;
+  void _toggleSection(String section) {
+    setState(() {
+      _expandedSection = _expandedSection == section ? null : section;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Semi-transparent backdrop
-        GestureDetector(
-          onTap: widget.onClose,
-          child: Container(
-            color: Colors.black54,
-          ),
-        ),
-        // Sliding panel
-        Align(
-          alignment: Alignment.centerRight,
-          child: Container(
-            width: widget.width,
-            height: double.infinity,
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header
-                  Row(
+    return Material(
+      color: Colors.white,
+      elevation: 8,
+      child: SizedBox(
+        width: widget.width, 
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
@@ -88,85 +73,102 @@ class _RightSideMenuState extends State<RightSideMenu> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
 
-                  // Accordion sections
-                  _buildSection(
-                    title: 'My collection',
-                    items: [
-                      _buildAction('Export collection', widget.onExportCollection),
-                      _buildAction('Import collection', widget.onImportCollection),
-                      _buildAction('Delete collection', widget.onDeleteCollection),
-                      _buildInfo('${widget.totalAlbums} albums total'),
-                      _buildInfo('${widget.listedAlbums} albums listed'),
-                    ],
-                  ),
-                  _buildSection(
-                    title: 'Saved searches',
-                    items: [
-                      _buildAction('Save current search', widget.onSaveSearch),
-                      _buildAction('Manage saved searches', widget.onManageSavedSearches),
-                    ],
-                  ),
-                  _buildSection(
-                    title: 'Special actions',
-                    items: [
-                      _buildAction('Add tag to list', widget.onAddTag),
-                      _buildAction('Remove tag from list', widget.onRemoveTag),
-                      _buildAction('Remove albums in list', widget.onRemoveAlbums),
-                    ],
-                  ),
-                  ListTile(
-                    dense: true,
-                    title: Text(
-                      'About',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                    ),
-                    onTap: () {
-                      widget.onClose(); // hide menu before performing action
-                      _onAboutPressed().call();
-                    },
-                  ),
+              ),
+              const Divider(),
 
-                  /*// Non-expandable section
-                  const Divider(height: 24),
-                  const Text(
-                    'About',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Record Keeper v1.0\nDeveloped with Flutter',
-                    style: TextStyle(color: Colors.black54),
-                  ),*/
+              // My Collection
+              _buildAccordionSection(
+                title: 'My Collection',
+                sectionKey: 'collection',
+                children: [
+                  _buildAction('Export collection', widget.onExportCollection),
+                  _buildAction('Import collection', widget.onImportCollection),
+                  _buildAction('Delete collection', widget.onDeleteCollection),
+                  _buildInfo('${widget.totalAlbums} albums total'),
+                  _buildInfo('${widget.listedAlbums} albums listed'),
                 ],
               ),
-            ),
+
+              // Saved Searches
+              _buildAccordionSection(
+                title: 'Saved Searches',
+                sectionKey: 'saved_searches',
+                children: [
+                  _buildAction('Save current search', widget.onSaveSearch),
+                  _buildAction('Manage saved searches', widget.onManageSavedSearches),
+                ],
+              ),
+
+              // Special Actions
+              _buildAccordionSection(
+                title: 'Special Actions',
+                sectionKey: 'special_actions',
+                children: [
+                  _buildAction('Add tag to list', widget.onAddTag),
+                  _buildAction('Remove tag from list', widget.onRemoveTag),
+                  _buildAction('Remove albums in list', widget.onRemoveAlbums),
+                ],
+              ),
+
+              ListTile(
+                dense: true,
+                title: Text(
+                  'About',
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+                ),
+                onTap: () {
+                  setState(() {
+                    _expandedSection = null; // collapse section
+                  });
+                  widget.onClose(); // hide menu before performing action
+                  _onAboutPressed().call();
+                },
+              ),
+            ],
           ),
-        ),
-      ],
+        )
+      ),
     );
   }
 
-  Widget _buildSection({required String title, required List<Widget> items}) {
-    final expanded = _expandedSections[title] ?? false;
+  Widget _buildAccordionSection({
+    required String title,
+    required String sectionKey,
+    required List<Widget> children,
+  }) {
+    final isExpanded = _expandedSection == sectionKey;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ListTile(
-          dense: true,
           title: Text(
             title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
           ),
-          trailing: Icon(expanded ? Icons.expand_less : Icons.expand_more),
-          onTap: () => setState(() => _expandSection(title, expanded)),
+          trailing: AnimatedRotation(
+            turns: isExpanded ? 0.5 : 0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: const Icon(Icons.expand_more),
+          ),
+          onTap: () => _toggleSection(sectionKey),
         ),
-        if (expanded)
-          Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Column(children: items),
+
+        // Animated expand/collapse
+        AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOutCubic,
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: isExpanded
+                ? const BoxConstraints()
+                : const BoxConstraints(maxHeight: 0),
+            child: Column(children: children),
           ),
+        ),
+
         const Divider(),
       ],
     );
@@ -177,6 +179,9 @@ class _RightSideMenuState extends State<RightSideMenu> {
       dense: true,
       title: Text(text),
       onTap: () {
+        setState(() {
+          _expandedSection = null; // collapse section
+        });
         widget.onClose(); // hide menu before performing action
         onPressed();
       },
