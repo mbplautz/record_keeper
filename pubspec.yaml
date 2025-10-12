@@ -56,6 +56,13 @@ dependencies:
   flutter_slidable: ^4.0.1
   flutter_sticky_header: ^0.8.0
 
+  # Album list import/export
+  archive: ^3.6.1
+  file_picker: ^8.0.3
+  file_saver: ^0.2.8
+  share_plus: ^12.0.0
+  version: ^3.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -41,6 +41,7 @@ void main() async {
     albumRepository: albumRepository,
     trackRepository: trackRepository,
     tagRepository: tagRepository,
+    appDatabase: appDatabase,
   ));
 }
 
@@ -48,12 +49,14 @@ class MyApp extends StatelessWidget {
   final AlbumRepository albumRepository;
   final TrackRepository trackRepository;
   final TagRepository tagRepository;
+  final AppDatabase appDatabase;
 
   const MyApp({
     super.key,
     required this.albumRepository,
     required this.trackRepository,
     required this.tagRepository,
+    required this.appDatabase,
   });
 
   @override
@@ -69,6 +72,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => TagProvider(tagRepository),
         ),
+        Provider<AppDatabase>.value(value: appDatabase),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

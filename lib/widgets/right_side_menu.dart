@@ -7,6 +7,7 @@ class RightSideMenu extends StatefulWidget {
   final VoidCallback onDeleteCollection;
   final VoidCallback onSaveSearch;
   final VoidCallback onManageSavedSearches;
+  final VoidCallback onImportSavedSearches;
   final VoidCallback onAddTag;
   final VoidCallback onRemoveTag;
   final VoidCallback onRemoveAlbums;
@@ -22,6 +23,7 @@ class RightSideMenu extends StatefulWidget {
     required this.onDeleteCollection,
     required this.onSaveSearch,
     required this.onManageSavedSearches,
+    required this.onImportSavedSearches,
     required this.onAddTag,
     required this.onRemoveTag,
     required this.onRemoveAlbums,
@@ -41,6 +43,12 @@ class _RightSideMenuState extends State<RightSideMenu>
   void _toggleSection(String section) {
     setState(() {
       _expandedSection = _expandedSection == section ? null : section;
+    });
+  }
+
+  void collapseAllSections() {
+    setState(() {
+      _expandedSection = null;
     });
   }
 
@@ -97,6 +105,7 @@ class _RightSideMenuState extends State<RightSideMenu>
                 children: [
                   _buildAction('Save current search', widget.onSaveSearch),
                   _buildAction('Manage saved searches', widget.onManageSavedSearches),
+                  _buildAction('Import saved searches', widget.onImportSavedSearches),
                 ],
               ),
 

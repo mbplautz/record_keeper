@@ -36,6 +36,7 @@ class AlbumProvider extends ChangeNotifier {
   AlbumProvider(this._repo, this._trackRepo, this._tagRepo);
 
   List<Album> get albums => _filteredAlbums;
+  List<Album> get allAlbums => _allAlbums;
   SortOption get currentSort => _currentSort;
   String get currentSearch => _currentSearch;
 
@@ -61,6 +62,12 @@ class AlbumProvider extends ChangeNotifier {
   /// Delete an album by its UUID string
   Future<void> deleteAlbum(String albumId) async {
     await _repo.deleteAlbum(albumId);
+    await fetchAllAlbums();
+  }
+
+  /// Delete all albums (used for "Clear Collection" action)
+  Future<void> deleteAllAlbums() async {
+    await _repo.deleteAllAlbums();
     await fetchAllAlbums();
   }
 

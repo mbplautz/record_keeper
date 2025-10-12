@@ -1,15 +1,21 @@
 // lib/views/main_screen_view.dart
 
+import 'dart:io';
 import 'dart:math';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../db/app_database.dart';
 import '../models/album.dart';
 import '../models/tag.dart';
 import '../providers/album_provider.dart';
 import '../providers/tag_provider.dart';
+import '../services/export_service.dart';
+import '../services/import_service.dart';
+import '../utils/file_utils.dart';
 import '../utils/image_utils.dart';
 import '../widgets/album_card.dart';
 import '../widgets/grouped_sticky_album_list.dart';
@@ -347,7 +353,6 @@ class _MainScreenViewState extends State<MainScreenView> {
         )
       ),
           // Slide-in menu overlay
-          //if (_menuVisible)
             AnimatedPositioned(
               duration: const Duration(milliseconds: 350),
               curve: Curves.easeInOutCubic,
@@ -356,15 +361,82 @@ class _MainScreenViewState extends State<MainScreenView> {
               bottom: 0,
               child: RightSideMenu(
                 width: min(MediaQuery.of(context).size.width, max(MediaQuery.of(context).size.width * 0.5, 300)),
-                onExportCollection: () => print('Export'),
-                onImportCollection: () => print('Import'),
-                onDeleteCollection: () => print('Delete'),
+                onExportCollection: () async {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+
+                  try {
+                    final dbPath = await getDatabasePath();
+                    final imageDirPath = await getImagesDirectoryPath();
+                    final thumbnailDirPath = await getThumbnailsDirectoryPath();
+
+                    await ExportService.exportCollection(
+                      databasePath: dbPath,
+                      imagesDirectoryPath: imageDirPath,
+                      thumbnailsDirectoryPath: thumbnailDirPath,
+                      context: context,
+                    );
+
+                    if (context.mounted) {
+                      Navigator.of(context).pop(); // remove spinner
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      Navigator.of(context).pop(); // remove spinner
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Export failed: $e')),
+                      );
+                    }
+                  }
+                },
+                onImportCollection: () async {
+                  final appDatabase = context.read<AppDatabase>();
+                  final database = await appDatabase.database;
+                  
+                  // Show native file picker
+                  FilePickerResult? result = await FilePicker.platform.pickFiles(
+                    type: FileType.custom,
+                    allowedExtensions: ['zip'],
+                  );
+
+                  if (result != null && result.files.single.path != null) {
+                    String filePath = result.files.single.path!;
+                    File zipFile = File(filePath);
+
+                    try {
+                      // Call import service
+                      await ImportService.importCollection(zipFile, database);
+                      provider.fetchAllAlbums();
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Import failed: $e')),
+                        );
+                      }
+                    }
+                  }
+                },
+                onDeleteCollection: () async {
+                  final confirm = await showConfirmDeleteDialog(context);
+                  if (confirm) {
+                    await provider.deleteAllAlbums();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('All albums deleted')),
+                    );
+                  }
+                },
                 onSaveSearch: () => print('Save search'),
                 onManageSavedSearches: () => print('Manage searches'),
+                onImportSavedSearches: () => print('Import searches'),
                 onAddTag: () => print('Add tag'),
                 onRemoveTag: () => print('Remove tag'),
                 onRemoveAlbums: () => print('Remove albums'),
-                totalAlbums: provider.albums.length,
+                totalAlbums: provider.allAlbums.length,
                 listedAlbums: provider.albums.length,
                 onClose: _toggleMenu,
               ),
@@ -385,5 +457,93 @@ class _MainScreenViewState extends State<MainScreenView> {
       ),
     )
     );
+  }
+/*
+  final _menuActions = {
+    onExportCollection: () async {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      try {
+        final dbPath = await getDatabasePath(); // implement if needed
+        final imageDirPath = await getImagesDirectoryPath(); // implement if needed
+
+        final savedPath = await ExportService.exportCollection(
+          databasePath: dbPath,
+          imagesDirectoryPath: imageDirPath,
+        );
+
+        if (context.mounted) {
+          Navigator.of(context).pop(); // remove spinner
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Exported successfully to:\n$savedPath')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          Navigator.of(context).pop(); // remove spinner
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Export failed: $e')),
+          );
+        }
+      }
+    },
+
+  };*/
+
+  Future<bool> showConfirmDeleteDialog(BuildContext context) async {
+    bool isChecked = false;
+
+    return await showDialog<bool>(
+      context: context,
+      barrierDismissible: false, // prevent closing without choosing
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('Delete Collection'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Are you sure? This action cannot be undone.'),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: isChecked,
+                        onChanged: (value) {
+                          setState(() => isChecked = value ?? false);
+                        },
+                      ),
+                      const Expanded(
+                        child: Text('I am sure'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: isChecked
+                      ? () => Navigator.of(context).pop(true)
+                      : null, // disabled when unchecked
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ) ??
+        false; // if dismissed, treat as false
   }
 }

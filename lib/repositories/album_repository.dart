@@ -7,6 +7,7 @@ abstract class AlbumRepository {
   Future<void> insertAlbum(Album album);
   Future<void> updateAlbum(Album album);
   Future<void> deleteAlbum(String albumId);
+  Future<void> deleteAllAlbums();
   Future<Album?> getAlbumById(String albumId);
   Future<List<Album>> getAllAlbums();
   Future<List<String>> getDistinctArtistList();

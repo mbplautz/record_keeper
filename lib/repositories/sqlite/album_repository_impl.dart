@@ -54,6 +54,16 @@ class AlbumRepositoryImpl implements AlbumRepository {
   }
 
   @override
+  Future<void> deleteAllAlbums() async {
+    try {
+      final db = await _db.database;
+      await db.delete('albums');
+    } catch (e) {
+      throw Exception('Failed to delete all albums: $e');
+    }
+  }
+
+  @override
   Future<Album?> getAlbumById(String albumId) async {
     final db = await _db.database;
     final maps = await db.query(
