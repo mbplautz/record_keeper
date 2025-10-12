@@ -2,8 +2,10 @@
 
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter/material.dart';
+import 'package:record_keeper/providers/track_provider.dart';
 import '../models/album.dart';
 import '../providers/album_provider.dart';
+import '../providers/tag_provider.dart';
 import '../utils/image_utils.dart';
 import '../views/album_details_view.dart';
 import 'package:provider/provider.dart';
@@ -42,6 +44,8 @@ class AlbumCard extends StatelessWidget {
         SlidableAction(
           onPressed: (ctx) async {
             final albumProv = ctx.read<AlbumProvider>();
+            final trackProv = ctx.read<TrackProvider>();
+            final tagProv = ctx.read<TagProvider>(); 
             final confirm = await showDialog<bool>(
               context: ctx,
               builder: (context) {
@@ -96,7 +100,15 @@ class AlbumCard extends StatelessWidget {
             );
 
             if (confirm == true) {
-              albumProv.deleteAlbum(album.id);
+              await trackProv.deleteTracksByAlbumId(album.id);
+              await tagProv.deleteTagsByAlbumId(album.id);
+              await albumProv.deleteAlbum(album.id);
+              if (album.coverImagePath != null) {
+                await ImageUtils.deleteImage(album.coverImagePath!);
+              }
+              if (album.coverThumbnailPath != null) {
+                await ImageUtils.deleteImage(album.coverThumbnailPath!);
+              }
             }
           },
           backgroundColor: Colors.red,

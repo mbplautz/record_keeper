@@ -86,4 +86,18 @@ class TrackRepositoryImpl implements TrackRepository {
     );
     return maps.map((m) => Track.fromMap(m)).toList();
   }
+
+  @override
+  Future<void> deleteTracksByAlbumId(String albumId) async {
+    try {
+      final db = await _db.database;
+      await db.delete(
+        'tracks',
+        where: 'album_id = ?',
+        whereArgs: [albumId],
+      );
+    } catch (e) {
+      throw Exception('Failed to delete tracks by album id: $e'); 
+    }
+  }
 }

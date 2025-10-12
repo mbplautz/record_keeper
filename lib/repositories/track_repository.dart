@@ -12,4 +12,7 @@ abstract class TrackRepository {
 
   /// List tracks by album
   Future<List<Track>> getTracksByAlbumId(String albumId);
+
+  /// Delete all tracks for a given album
+  Future<void> deleteTracksByAlbumId(String albumId);
 }

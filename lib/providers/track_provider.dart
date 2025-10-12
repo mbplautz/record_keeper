@@ -41,4 +41,13 @@ class TrackProvider extends ChangeNotifier {
       await loadTracksForAlbum(_albumId!);
     }
   }
+
+  /// Delete all tracks for a given album
+  Future<void> deleteTracksByAlbumId(String albumId) async {
+    await _repo.deleteTracksByAlbumId(albumId);
+    if (_albumId == albumId) {
+      _tracks = [];
+      notifyListeners();
+    }
+  }
 }

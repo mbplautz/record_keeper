@@ -35,6 +35,15 @@ class TagProvider extends ChangeNotifier {
     }
   }
 
+  /// Delete all tags for a given album
+  Future<void> deleteTagsByAlbumId(String albumId) async {
+    await _repo.deleteTagsByAlbumId(albumId);
+    if (_albumId == albumId) {
+      _tags = [];
+      notifyListeners();
+    }
+  }
+
   Future<List<String>> getDistinctTagList() async {
     return await _repo.getDistinctTagList();
   }
