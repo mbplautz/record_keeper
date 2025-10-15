@@ -20,8 +20,13 @@ class ImageUtils {
       source: fromCamera ? ImageSource.camera : ImageSource.gallery,
       imageQuality: 90, // compress a little on pick
     );
-    
+
     if (pickedFile == null) return null;
+    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+      // Skip cropping on desktop
+      return File(pickedFile.path);
+    }
+
     final croppedFile = await _cropper.cropImage(
       sourcePath: pickedFile.path,
       aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
