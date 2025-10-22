@@ -318,6 +318,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
       // Switch into edit mode
       setState(() {
         _isEditMode = true;
+        _editingTrackIndex = null;
       });
       return;
     }
@@ -496,7 +497,14 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
     );
 
     if (_isNew) {
+      // Add new album
       await _albumProv.addAlbum(updatedAlbum);
+
+      // Add current local tracks
+      for (final tTitle in _localTracks) {
+        final newTrack = Track(id: null, albumId: _album!.id, title: tTitle);
+        await _trackProv.addTrack(newTrack);
+      }
     } else {
       // Persist album row
       await _albumProv.updateAlbum(updatedAlbum);
