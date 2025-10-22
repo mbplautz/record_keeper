@@ -116,7 +116,7 @@ class _RightSideMenuState extends State<RightSideMenu>
                 children: [
                   _buildAction('Add tag to list', widget.onAddTag),
                   _buildAction('Remove tag from list', widget.onRemoveTag),
-                  _buildAction('Remove albums in list', widget.onRemoveAlbums),
+                  _buildAction('Delete albums in list', widget.onRemoveAlbums),
                 ],
               ),
 
