@@ -43,11 +43,23 @@ class AlbumRepositoryImpl implements AlbumRepository {
   Future<void> deleteAlbum(String albumId) async {
     try {
       final db = await _db.database;
-      await db.delete(
-        'albums',
-        where: 'id = ?',
-        whereArgs: [albumId],
-      );
+      await db.transaction((txn) async {
+        await txn.delete(
+          'albums',
+          where: 'id = ?',
+          whereArgs: [albumId],
+        );
+        await txn.delete(
+          'tracks',
+          where: 'album_id = ?',
+          whereArgs: [albumId],
+        ); // Also clear tracks
+        await txn.delete(
+          'tags',
+          where: 'album_id = ?',
+          whereArgs: [albumId],
+        );   // Also clear tags
+      });
     } catch (e) {
       throw Exception('Failed to delete album: $e');
     }
@@ -57,7 +69,11 @@ class AlbumRepositoryImpl implements AlbumRepository {
   Future<void> deleteAllAlbums() async {
     try {
       final db = await _db.database;
-      await db.delete('albums');
+      await db.transaction((txn) async {
+        await txn.delete('albums');
+        await txn.delete('tracks'); // Also clear tracks
+        await txn.delete('tags');   // Also clear tags
+      });
     } catch (e) {
       throw Exception('Failed to delete all albums: $e');
     }
@@ -105,6 +121,78 @@ class AlbumRepositoryImpl implements AlbumRepository {
     return result.map((m) => m['sort_artist'] as String).toList();
   }
 
+  @override
+  Future<void> addTagToList(String tag, List<String> albumIdList) async {
+    if (albumIdList.isEmpty) return;
+    final db = await _db.database;
+    // 1. Create a string of '?' placeholders for the IN clause.
+    final placeholders = albumIdList.map((_) => '?').join(', ');
+
+    // 2. Construct the parameterized SQL statement.
+    final sql = '''
+      INSERT INTO tags (album_id, tag)
+      SELECT DISTINCT id, ? AS tag FROM albums
+      INNER JOIN (
+        SELECT album_id FROM (
+          SELECT albums.id AS album_id, COALESCE(tag, '') AS tag
+          FROM albums
+          LEFT OUTER JOIN tags
+          ON albums.id = tags.album_id
+        ) AS album_tags
+        WHERE tag <> ?
+      ) AS tags ON albums.id = tags.album_id
+      WHERE albums.id IN ($placeholders);
+    ''';
+
+    // 3. Combine all parameters into a single list in the correct order.
+    // The first two parameters are the 'tag' string.
+    // The subsequent parameters are the album IDs.
+    final params = [tag, tag, ...albumIdList];
+
+    // 4. Execute the query using db.rawInsert.
+    await db.rawInsert(sql, params);
+  }
+
+  @override
+  Future<void> deleteTagFromList(String tag, List<String> albumIdList) async {
+    if (albumIdList.isEmpty) return;
+    final db = await _db.database;
+    final placeholders = albumIdList.map((_) => '?').join(', ');
+    final sql = '''
+      DELETE FROM tags
+      WHERE tag = ? AND album_id IN ($placeholders);
+    ''';
+    final params = [tag, ...albumIdList];
+    await db.rawDelete(sql, params);
+  }
+
+  @override
+  Future<void> deleteAlbumList(List<String> albumIdList) async {
+    if (albumIdList.isEmpty) return;
+    final db = await _db.database;
+    final placeholders = albumIdList.map((_) => '?').join(', ');
+    try {
+      await db.transaction((txn) async {
+        await txn.delete(
+          'albums',
+          where: 'id IN ($placeholders)',
+          whereArgs: albumIdList,
+        );
+        await txn.delete(
+          'tracks',
+          where: 'album_id IN ($placeholders)',
+          whereArgs: albumIdList,
+        ); // Also clear tracks
+        await txn.delete(
+          'tags',
+          where: 'album_id IN ($placeholders)',
+          whereArgs: albumIdList,
+        );   // Also clear tags
+      });
+    } catch (e) {
+      throw Exception('Failed to delete album list: $e');
+    }
+  }
 
   @override
   Future<List<Album>> searchAlbums({

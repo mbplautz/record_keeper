@@ -12,6 +12,9 @@ abstract class AlbumRepository {
   Future<List<Album>> getAllAlbums();
   Future<List<String>> getDistinctArtistList();
   Future<List<String>> getDistinctSortArtistList();
+  Future<void> addTagToList(String tag, List<String> albumIdList);
+  Future<void> deleteTagFromList(String tag, List<String> albumIdList);
+  Future<void> deleteAlbumList(List<String> albumIdList);
 
   /// Filtering & Searching
   /// Returns albums that match any of the provided terms (OR logic),

@@ -89,6 +89,21 @@ class AlbumProvider extends ChangeNotifier {
     return await _repo.getDistinctSortArtistList();
   }
 
+  Future<void> addTagToList(String tag) async {
+    await _repo.addTagToList(tag, _filteredAlbums.map((a) => a.id).toList());
+    await fetchAllAlbums();
+  } 
+
+  Future<void> deleteTagFromList(String tag) async {
+    await _repo.deleteTagFromList(tag, _filteredAlbums.map((a) => a.id).toList());
+    await fetchAllAlbums();
+  }
+
+  Future<void> deleteAlbumList() async {
+    await _repo.deleteAlbumList(_filteredAlbums.map((a) => a.id).toList());
+    await fetchAllAlbums();
+  }
+
   Future<List<Album>> searchAlbums({
     List<String>? terms,
     List<String>? plusTerms,
@@ -132,6 +147,7 @@ class AlbumProvider extends ChangeNotifier {
   /// Clear current search filter and restore all albums
   void clearSearch() {
     final filtered = List<Album>.from(_allAlbums);
+    _currentSearch = '';
     _filteredAlbums = _sortAlbums(filtered, _currentSort);
     notifyListeners();
   }

@@ -22,6 +22,8 @@ import '../widgets/grouped_sticky_album_list.dart';
 import '../widgets/right_side_menu.dart';
 import 'album_details_view.dart';
 
+typedef VoidCallbackFunction = Future<void> Function();
+
 class MainScreenView extends StatefulWidget {
   const MainScreenView({super.key});
 
@@ -105,7 +107,8 @@ class _MainScreenViewState extends State<MainScreenView> {
   }
   
   // Display Add Tag dialog per spec (centered). On OK: persist tag immediately.
-  Future<void> _showAddTagDialog(String albumId, AlbumProvider albumProv) async {
+  Future<void> _showAddTagDialog(String albumId, AlbumProvider albumProv, 
+    { String? alternativeTitle, VoidCallbackFunction? alternativeCallback}) async {
     final tagProv = Provider.of<TagProvider>(context, listen: false);
     tagProv.loadTagsForAlbum(albumId);
     final List<String> distinctTags = await tagProv.getDistinctTagList();
@@ -125,7 +128,7 @@ class _MainScreenViewState extends State<MainScreenView> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Add Tag', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(alternativeTitle ?? 'Add Tag', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   _buildTagAutocomplete(distinctTags),
                   const SizedBox(height: 12),
@@ -143,7 +146,7 @@ class _MainScreenViewState extends State<MainScreenView> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () async {
+                          onPressed: alternativeCallback ?? () async {
                             final text = _tagController.text;
                             if (text.trim().isEmpty) {
                               Navigator.of(ctx).pop();
@@ -433,9 +436,55 @@ class _MainScreenViewState extends State<MainScreenView> {
                 onSaveSearch: () => print('Save search'),
                 onManageSavedSearches: () => print('Manage searches'),
                 onImportSavedSearches: () => print('Import searches'),
-                onAddTag: () => print('Add tag'),
-                onRemoveTag: () => print('Remove tag'),
-                onRemoveAlbums: () => print('Remove albums'),
+                onAddTag: () async {
+                  await _showAddTagDialog("", provider, 
+                    alternativeTitle: 'Add Tag to List',
+                    alternativeCallback: () async {
+                      final text = _tagController.text;
+                      if (text.trim().isEmpty) {
+                        Navigator.of(context).pop();
+                        return;
+                      }
+
+                      await provider.addTagToList(text);
+                      Navigator.of(context).pop();
+                      if (mounted) setState(() {});
+                    }
+                  );
+                },
+                onRemoveTag: () async {
+                  await _showAddTagDialog("", provider, 
+                    alternativeTitle: 'Remove Tag from List',
+                    alternativeCallback: () async {
+                      final text = _tagController.text;
+                      if (text.trim().isEmpty) {
+                        Navigator.of(context).pop();
+                        return;
+                      }
+
+                      await provider.deleteTagFromList(text);
+                      Navigator.of(context).pop();
+                      if (mounted) setState(() {});
+                    }
+                  );
+                },
+                onRemoveAlbums: () async {
+                  final listCount = provider.albums.length;
+                  if (listCount == 0) return;
+                  final adjective = listCount > 1 ? 'these' : 'this';
+                  final plural = listCount > 1 ? 's' : '';
+                  final confirm = await showConfirmDeleteDialog(
+                    context,
+                    title: 'Delete List',
+                    text: 'Are you sure you want to delete $adjective $listCount album$plural? This action cannot be undone.'
+                  );
+                  if (confirm) {
+                    await provider.deleteAlbumList();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('$listCount album$plural deleted')),
+                    );
+                  }
+                },
                 totalAlbums: provider.allAlbums.length,
                 listedAlbums: provider.albums.length,
                 onClose: _toggleMenu,
@@ -458,45 +507,11 @@ class _MainScreenViewState extends State<MainScreenView> {
     )
     );
   }
-/*
-  final _menuActions = {
-    onExportCollection: () async {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
 
-      try {
-        final dbPath = await getDatabasePath(); // implement if needed
-        final imageDirPath = await getImagesDirectoryPath(); // implement if needed
-
-        final savedPath = await ExportService.exportCollection(
-          databasePath: dbPath,
-          imagesDirectoryPath: imageDirPath,
-        );
-
-        if (context.mounted) {
-          Navigator.of(context).pop(); // remove spinner
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Exported successfully to:\n$savedPath')),
-          );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          Navigator.of(context).pop(); // remove spinner
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Export failed: $e')),
-          );
-        }
-      }
-    },
-
-  };*/
-
-  Future<bool> showConfirmDeleteDialog(BuildContext context) async {
+  Future<bool> showConfirmDeleteDialog(BuildContext context,
+   { String title = 'Delete Collection', 
+     String text = 'Are you sure? This action cannot be undone.'
+   }) async {
     bool isChecked = false;
 
     return await showDialog<bool>(
@@ -506,11 +521,11 @@ class _MainScreenViewState extends State<MainScreenView> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return AlertDialog(
-              title: const Text('Delete Collection'),
+              title: Text(title),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Are you sure? This action cannot be undone.'),
+                  Text(text),
                   const SizedBox(height: 16),
                   Row(
                     children: [
