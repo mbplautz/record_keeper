@@ -48,17 +48,19 @@ class _SaveSearchDialogState extends State<SaveSearchDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Save as new search
-            Row(
-              children: [
-                Radio<SaveMode>(
-                  value: SaveMode.newSearch,
-                  groupValue: _selectedMode,
-                  onChanged: (value) {
-                    setState(() => _selectedMode = value!);
-                  },
-                ),
-                const Text('Save as new search'),
-              ],
+            InkWell(
+              onTap: () => setState(() => _selectedMode = SaveMode.newSearch),
+              child: Row(
+                children: [
+                  Icon(
+                    _selectedMode == SaveMode.newSearch
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_off,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('Save as new search'),
+                ],
+              ),
             ),
             const SizedBox(height: 4),
             Center(
@@ -90,24 +92,26 @@ class _SaveSearchDialogState extends State<SaveSearchDialog> {
             ),
             const SizedBox(height: 16),
             // Overwrite existing search
-            Row(
-              children: [
-                Radio<SaveMode>(
-                  value: SaveMode.overwrite,
-                  groupValue: _selectedMode,
-                  onChanged: (value) {
-                    setState(() => _selectedMode = value!);
-                  },
-                ),
-                const Text('Overwrite existing search'),
-              ],
+            InkWell(
+              onTap: () => setState(() => _selectedMode = SaveMode.overwrite),
+              child: Row(
+                children: [
+                  Icon(
+                    _selectedMode == SaveMode.overwrite
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_off,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('Overwrite existing search'),
+                ],
+              ),
             ),
             const SizedBox(height: 4),
             Center(
               child: SizedBox(
                 width: 300,
                 child: DropdownButtonFormField<String>(
-                  value: _selectedExisting ?? 'Select existing search',
+                  initialValue: _selectedExisting ?? 'Select existing search',
                   decoration: const InputDecoration(),
                   items: [
                     const DropdownMenuItem(
