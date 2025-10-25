@@ -80,6 +80,25 @@ class AppDatabase {
 
     await db.execute('CREATE INDEX idx_tags_album_id ON tags(album_id)');
     await db.execute('CREATE INDEX idx_tags_tag ON tags(tag COLLATE NOCASE)');
+
+    await db.execute('''
+      CREATE TABLE saved_searches (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        is_default INTEGER NOT NULL DEFAULT 0,
+        name TEXT NOT NULL,
+        query TEXT NOT NULL,
+        search_title INTEGER NOT NULL DEFAULT 1,
+        search_artist INTEGER NOT NULL DEFAULT 1,
+        search_sort_artist INTEGER NOT NULL DEFAULT 1,
+        search_release_date INTEGER NOT NULL DEFAULT 1,
+        search_tracks INTEGER NOT NULL DEFAULT 1,
+        search_tags INTEGER NOT NULL DEFAULT 1,
+        sort_option INTEGER NOT NULL DEFAULT 0
+      );
+    ''');
+
+    await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_saved_searches_id ON saved_searches(id);');
+    await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_saved_searches_name ON saved_searches(name);');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {

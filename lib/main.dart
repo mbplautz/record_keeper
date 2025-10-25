@@ -7,7 +7,10 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'db/app_database.dart';
+import 'providers/saved_search_provider.dart';
 import 'repositories/album_repository.dart';
+import 'repositories/saved_search_repository.dart';
+import 'repositories/sqlite/saved_search_repository_impl.dart';
 import 'repositories/track_repository.dart';
 import 'repositories/tag_repository.dart';
 import 'repositories/sqlite/album_repository_impl.dart';
@@ -36,11 +39,13 @@ void main() async {
   final albumRepository = AlbumRepositoryImpl(appDatabase);
   final trackRepository = TrackRepositoryImpl(appDatabase);
   final tagRepository = TagRepositoryImpl(appDatabase);
+  final savedSearchRepository = SavedSearchRepositoryImpl(appDatabase);
 
   runApp(MyApp(
     albumRepository: albumRepository,
     trackRepository: trackRepository,
     tagRepository: tagRepository,
+    savedSearchRepository: savedSearchRepository,
     appDatabase: appDatabase,
   ));
 }
@@ -49,6 +54,7 @@ class MyApp extends StatelessWidget {
   final AlbumRepository albumRepository;
   final TrackRepository trackRepository;
   final TagRepository tagRepository;
+  final SavedSearchRepository savedSearchRepository;
   final AppDatabase appDatabase;
 
   const MyApp({
@@ -56,6 +62,7 @@ class MyApp extends StatelessWidget {
     required this.albumRepository,
     required this.trackRepository,
     required this.tagRepository,
+    required this.savedSearchRepository,
     required this.appDatabase,
   });
 
@@ -72,11 +79,14 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => TagProvider(tagRepository),
         ),
+        ChangeNotifierProvider(
+          create: (_) => SavedSearchProvider(savedSearchRepository),
+        ),
         Provider<AppDatabase>.value(value: appDatabase),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Album Collection',
+        title: 'Record Keeper',
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),

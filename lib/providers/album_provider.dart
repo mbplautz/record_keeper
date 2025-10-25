@@ -1,6 +1,7 @@
 // lib/providers/album_provider.dart
 
 import 'package:flutter/foundation.dart';
+import 'package:record_keeper/models/saved_search.dart';
 import 'package:record_keeper/models/tag.dart';
 import 'package:record_keeper/models/track.dart';
 import 'package:record_keeper/repositories/tag_repository.dart';
@@ -39,6 +40,7 @@ class AlbumProvider extends ChangeNotifier {
   List<Album> get allAlbums => _allAlbums;
   SortOption get currentSort => _currentSort;
   String get currentSearch => _currentSearch;
+  Map<String, bool> get searchFields => _searchFields;
 
   /// Load all albums (used by Main Screen)
   /// @Deprecated - use fetchAllAlbums
@@ -104,6 +106,17 @@ class AlbumProvider extends ChangeNotifier {
     await fetchAllAlbums();
   }
 
+  Future<void> applySavedSearch(SavedSearch search) async {
+    _searchFields['title'] = search.searchTitle;
+    _searchFields['artist'] = search.searchArtist;
+    _searchFields['sortArtist'] = search.searchSortArtist;
+    _searchFields['releaseDate'] = search.searchReleaseDate;
+    _searchFields['tracks'] = search.searchTracks;
+    _searchFields['tags'] = search.searchTags;
+    _currentSort = SortOption.values[search.sortOption];
+    setSearchQuery(search.query);
+  }
+
   Future<List<Album>> searchAlbums({
     List<String>? terms,
     List<String>? plusTerms,
@@ -112,9 +125,6 @@ class AlbumProvider extends ChangeNotifier {
   }) async {
     return await _repo.searchAlbums(terms: terms, plusTerms: plusTerms, minusTerms: minusTerms, caseInsensitive: caseInsensitive);
   }
-
-  Map<String, bool> get searchFields => _searchFields;
-  SortOption get sortOption => _currentSort;
 
   Future<void> fetchAllAlbums() async {
     _allAlbums = await _repo.getAllAlbums();

@@ -7,11 +7,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:record_keeper/models/saved_search.dart';
 
 import '../db/app_database.dart';
 import '../models/album.dart';
 import '../models/tag.dart';
 import '../providers/album_provider.dart';
+import '../providers/saved_search_provider.dart';
 import '../providers/tag_provider.dart';
 import '../services/export_service.dart';
 import '../services/import_service.dart';
@@ -20,6 +22,7 @@ import '../utils/image_utils.dart';
 import '../widgets/album_card.dart';
 import '../widgets/grouped_sticky_album_list.dart';
 import '../widgets/right_side_menu.dart';
+import '../widgets/saved_search_dialog.dart';
 import 'album_details_view.dart';
 
 typedef VoidCallbackFunction = Future<void> Function();
@@ -46,7 +49,18 @@ class _MainScreenViewState extends State<MainScreenView> {
 
     if (!_isInitialized) {
       // Trigger the one-time fetch
-      Provider.of<AlbumProvider>(context, listen: false).fetchAllAlbums();
+      final albumProvider = Provider.of<AlbumProvider>(context, listen: false);
+      final savedSearchProvider = Provider.of<SavedSearchProvider>(context, listen: false);
+      
+      await albumProvider.fetchAllAlbums();
+      await savedSearchProvider.loadAll();
+      
+      final defaultSearch = savedSearchProvider.defaultSearch;
+      if (defaultSearch != null) {
+        _searchController.text = defaultSearch.query;
+        await albumProvider.applySavedSearch(defaultSearch);
+      }
+
       ImageUtils.applicationDocumentsDirectory = (await getApplicationDocumentsDirectory()).path;
       _isInitialized = true;
     }
@@ -208,10 +222,10 @@ class _MainScreenViewState extends State<MainScreenView> {
   Widget build(BuildContext context) {
     final provider = Provider.of<AlbumProvider>(context);
 
-    final needsSticky = provider.sortOption == SortOption.artistThenYear 
-      || provider.sortOption == SortOption.artistThenAlpha
-      || provider.sortOption == SortOption.albumAlpha
-      || provider.sortOption == SortOption.releaseYear;
+    final needsSticky = provider.currentSort == SortOption.artistThenYear 
+      || provider.currentSort == SortOption.artistThenAlpha
+      || provider.currentSort == SortOption.albumAlpha
+      || provider.currentSort == SortOption.releaseYear;
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
@@ -319,7 +333,7 @@ class _MainScreenViewState extends State<MainScreenView> {
                     itemBuilder: (context) => SortOption.values.map((option) {
                       return CheckedPopupMenuItem<SortOption>(
                         value: option,
-                        checked: provider.sortOption == option,
+                        checked: provider.currentSort == option,
                         child: Text(_sortOptionLabel(option)),
                       );
                     }).toList(),
@@ -433,9 +447,43 @@ class _MainScreenViewState extends State<MainScreenView> {
                     );
                   }
                 },
-                onSaveSearch: () => print('Save search'),
+                onSaveSearch: () async {
+                  await showDialog<bool>(
+                    context: context,
+                    builder: (context) => const SaveSearchDialog(),
+                  );
+                },
                 onManageSavedSearches: () => print('Manage searches'),
-                onImportSavedSearches: () => print('Import searches'),
+                onImportSavedSearches: () async {
+                  final appDatabase = context.read<AppDatabase>();
+                  final database = await appDatabase.database;
+                  try {
+                    await database.execute('''
+CREATE TABLE saved_searches (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  is_default INTEGER NOT NULL DEFAULT 0,
+  name TEXT NOT NULL,
+  query TEXT NOT NULL,
+  search_title INTEGER NOT NULL DEFAULT 1,
+  search_artist INTEGER NOT NULL DEFAULT 1,
+  search_sort_artist INTEGER NOT NULL DEFAULT 1,
+  search_release_date INTEGER NOT NULL DEFAULT 1,
+  search_tracks INTEGER NOT NULL DEFAULT 1,
+  search_tags INTEGER NOT NULL DEFAULT 1,
+  sort_option INTEGER NOT NULL DEFAULT 0
+);''');
+                    await database.execute('''
+CREATE UNIQUE INDEX IF NOT EXISTS idx_saved_searches_name ON saved_searches(name);
+'''); 
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Saved searches imported successfully')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Import saved searches failed: $e')),
+                    );
+                  }
+                },
                 onAddTag: () async {
                   await _showAddTagDialog("", provider, 
                     alternativeTitle: 'Add Tag to List',
