@@ -23,6 +23,7 @@ import '../widgets/album_card.dart';
 import '../widgets/grouped_sticky_album_list.dart';
 import '../widgets/right_side_menu.dart';
 import '../widgets/saved_search_dialog.dart';
+import '../widgets/select_saved_search_dialog.dart';
 import 'album_details_view.dart';
 
 typedef VoidCallbackFunction = Future<void> Function();
@@ -453,7 +454,18 @@ class _MainScreenViewState extends State<MainScreenView> {
                     builder: (context) => const SaveSearchDialog(),
                   );
                 },
-                onManageSavedSearches: () => print('Manage searches'),
+                onManageSavedSearches: () async {
+                  final result = await showDialog<SavedSearch>(
+                    context: context,
+                    builder: (context) => SelectSavedSearchDialog(),
+                  );
+
+                  if (result != null) {
+                    setState(() {
+                      _searchController.text = result.query;
+                    });
+                  }
+                },
                 onImportSavedSearches: () async {
                   final appDatabase = context.read<AppDatabase>();
                   final database = await appDatabase.database;
