@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../views/about_view.dart';
+
 class RightSideMenu extends StatefulWidget {
   final double width;
   final VoidCallback onExportCollection;
@@ -209,7 +211,11 @@ class _RightSideMenuState extends State<RightSideMenu>
 
   VoidCallback _onAboutPressed() {
     return () {
-      print("About pressed"); // Replace with actual about dialog logic
+//      print("About pressed"); // Replace with actual about dialog logic
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AboutView()),
+      );
     };
   }
 }
