@@ -126,4 +126,99 @@ class ImportService {
     return albums.length;
   }
 
+  /// Imports saved searches from a zipped export into the current app database.
+  /// 
+  /// - [zipFile]: the .zip file containing a previous export
+  /// - [db]: the open app SQLite database
+  /// 
+  /// Copies all entries from `saved_searches` in the extracted DB into the
+  /// current database, forcing `is_default = 0`. 
+  /// Duplicate names are renamed as "Name (1)", "Name (2)", etc.
+  static Future<int> importSearches(File zipFile, Database db) async {
+    // 1. Read and extract the ZIP archive in memory
+    final bytes = await zipFile.readAsBytes();
+    final archive = ZipDecoder().decodeBytes(bytes);
+
+    // 2. Find the inner SQLite file (e.g. saved_searches.db or similar)
+    ArchiveFile? dbFile;
+    for (final file in archive) {
+      if (file.isFile && p.extension(file.name).toLowerCase() == '.db') {
+        dbFile = file;
+        break;
+      }
+    }
+
+    if (dbFile == null) {
+      throw Exception('No .db file found inside the ZIP archive.');
+    }
+
+    // 3. Write the extracted DB to a temporary location
+    final tempDir = await Directory.systemTemp.createTemp('import_searches_');
+    final tempDbPath = p.join(tempDir.path, p.basename(dbFile.name));
+    final outFile = File(tempDbPath);
+    await outFile.writeAsBytes(dbFile.content as List<int>);
+
+    // 4. Open the extracted database (read-only)
+    final importDb = await openDatabase(tempDbPath, readOnly: true);
+
+    try {
+      // 5. Read all saved searches from the extracted DB
+      final List<Map<String, dynamic>> importedSearches =
+          await importDb.query('saved_searches');
+
+      // 6. Read existing names from the target DB to check duplicates
+      final existingNamesResult = await db.query(
+        'saved_searches',
+        columns: ['name'],
+      );
+      final existingNames =
+          existingNamesResult.map((row) => row['name'] as String).toSet();
+
+      // 7. Helper to generate a unique name if needed
+      String uniqueName(String baseName) {
+        if (!existingNames.contains(baseName)) {
+          existingNames.add(baseName);
+          return baseName;
+        }
+
+        int counter = 1;
+        while (true) {
+          final candidate = '$baseName ($counter)';
+          if (!existingNames.contains(candidate)) {
+            existingNames.add(candidate);
+            return candidate;
+          }
+          counter++;
+        }
+      }
+
+      // 8. Insert each imported search into the current DB
+      final batch = db.batch();
+
+      for (final row in importedSearches) {
+        final name = row['name'].toString();
+        final newName = uniqueName(name);
+
+        final newRow = Map<String, dynamic>.from(row)
+          ..['name'] = newName
+          ..['is_default'] = 0;
+
+        // Remove the old primary key if present
+        newRow.remove('id');
+
+        batch.insert(
+          'saved_searches',
+          newRow,
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
+      }
+
+      await batch.commit(noResult: true);
+
+      return importedSearches.length;
+    } finally {
+      await importDb.close();
+      await tempDir.delete(recursive: true);
+    }
+  }
 }

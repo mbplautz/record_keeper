@@ -474,33 +474,35 @@ class _MainScreenViewState extends State<MainScreenView> {
                 onImportSavedSearches: () async {
                   final appDatabase = context.read<AppDatabase>();
                   final database = await appDatabase.database;
-                  try {
-                    await database.execute('''
-CREATE TABLE saved_searches (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  is_default INTEGER NOT NULL DEFAULT 0,
-  name TEXT NOT NULL,
-  query TEXT NOT NULL,
-  search_title INTEGER NOT NULL DEFAULT 1,
-  search_artist INTEGER NOT NULL DEFAULT 1,
-  search_sort_artist INTEGER NOT NULL DEFAULT 1,
-  search_release_date INTEGER NOT NULL DEFAULT 1,
-  search_tracks INTEGER NOT NULL DEFAULT 1,
-  search_tags INTEGER NOT NULL DEFAULT 1,
-  sort_option INTEGER NOT NULL DEFAULT 0
-);''');
-                    await database.execute('''
-CREATE UNIQUE INDEX IF NOT EXISTS idx_saved_searches_name ON saved_searches(name);
-'''); 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Saved searches imported successfully')),
-                    );
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Import saved searches failed: $e')),
-                    );
+                  
+                  // Show native file picker
+                  FilePickerResult? result = await FilePicker.platform.pickFiles(
+                    type: FileType.custom,
+                    allowedExtensions: ['zip'],
+                  );
+
+                  if (result != null && result.files.single.path != null) {
+                    String filePath = result.files.single.path!;
+                    File zipFile = File(filePath);
+
+                    try {
+                      // Call import service
+                      final importCount = await ImportService.importSearches(zipFile, database);
+                      await context.read<SavedSearchProvider>().loadAll();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Successfully imported $importCount searches')),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Import failed: $e')),
+                        );
+                      }
+                    }
                   }
-                },
+                 },
                 onAddTag: () async {
                   await _showAddTagDialog("", provider, 
                     alternativeTitle: 'Add Tag to List',
