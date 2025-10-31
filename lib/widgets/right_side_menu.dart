@@ -17,7 +17,6 @@ class RightSideMenu extends StatefulWidget {
   final int listedAlbums;
   final bool visible;
   final VoidCallback onClose;
-  final VoidCallback onHide;
 
   const RightSideMenu({
     super.key,
@@ -35,7 +34,6 @@ class RightSideMenu extends StatefulWidget {
     required this.listedAlbums,
     required this.visible,
     required this.onClose,
-    required this.onHide
   });
 
   @override
@@ -56,15 +54,6 @@ class RightSideMenuState extends State<RightSideMenu>
     setState(() {
       _expandedSection = null;
     });
-  }
-
-  @override
-  void didUpdateWidget(RightSideMenu oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Detect visibility change from true -> false
-    if (oldWidget.visible && !widget.visible) {
-      widget.onHide.call();
-    }
   }
 
   @override

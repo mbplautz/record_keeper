@@ -565,7 +565,6 @@ class _MainScreenViewState extends State<MainScreenView> {
                 totalAlbums: provider.allAlbums.length,
                 listedAlbums: provider.albums.length,
                 onClose: _toggleMenu,
-                onHide: () {}
               ),
             ),
       ]
