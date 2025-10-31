@@ -12,7 +12,6 @@ class SelectSavedSearchDialog extends StatefulWidget {
 
 class _SelectSavedSearchDialogState extends State<SelectSavedSearchDialog> {
   int? _selectedIndex;
-  bool _deleting = false;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +19,6 @@ class _SelectSavedSearchDialogState extends State<SelectSavedSearchDialog> {
     final albumProvider = Provider.of<AlbumProvider>(context, listen: false);
 
     final savedSearches = savedSearchProvider.savedSearches;
-
     final selectedSearch =
         _selectedIndex != null && _selectedIndex! < savedSearches.length
             ? savedSearches[_selectedIndex!]
@@ -28,44 +26,138 @@ class _SelectSavedSearchDialogState extends State<SelectSavedSearchDialog> {
 
     void refresh() => setState(() {});
 
-    return AlertDialog(
-      title: const Text('Saved Searches'),
-      content: SizedBox(
-        width: 500,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ======== SAVED SEARCH LIST ========
-            Container(
-              height: 3 * 40.0, // roughly 5 text lines high
-              decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).dividerColor),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: ListView.builder(
-                itemCount: savedSearches.length,
-                itemBuilder: (context, index) {
-                  final search = savedSearches[index];
-                  final bool isSelected = index == _selectedIndex;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 400;
+
+                final buttonWidgets = [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: selectedSearch == null
+                        ? null
+                        : () async {
+                            if (selectedSearch.isDefault == true) return;
+                            await savedSearchProvider.setDefaultSearch(selectedSearch.id!);
+                            refresh();
+                          },
+                    child: const Text('Make Default'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      await savedSearchProvider.setDefaultSearch(-1);
+                      refresh();
+                    },
+                    child: const Text('Reset Default'),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Edit',
+                        style: TextStyle(
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.info_outline, color: Colors.blue.shade600, size: 18),
+                    ],
+                  ),
+                  TextButton(
+                    onPressed: selectedSearch == null
+                        ? null
+                        : () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: const Text('Delete Saved Search'),
+                                content: const Text(
+                                    'Are you sure you want to delete this saved search?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.of(context).pop(true),
+                                    child: const Text('OK'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirm == true) {
+                              await savedSearchProvider.deleteSearch(selectedSearch.id!);
+                              setState(() => _selectedIndex = null);
+                            }
+                          },
+                    child: const Text('Delete'),
+                  ),
+                  ElevatedButton(
+                    onPressed: selectedSearch == null
+                        ? null
+                        : () {
+                  albumProvider.applySavedSearch(selectedSearch);
+                  Navigator.of(context).pop(selectedSearch);
+                          },
+                    child: const Text('Select'),
+                  ),
+                ];
+
+
+        return AlertDialog(
+          title: const Text('Saved Searches'),
+          content: SizedBox(
+            width: 500,
+            child: LayoutBuilder(
+              builder: (context, innerConstraints) {
+                // Calculate available height dynamically for ListView
+                final availableHeight = innerConstraints.maxHeight.isFinite
+                    ? innerConstraints.maxHeight
+                    : 400.0;
+                final itemHeight = 40.0;
+                final listHeight =
+                    (availableHeight * 0.3).clamp(itemHeight * 2, itemHeight * 5);
+
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 500),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // ======== SAVED SEARCH LIST ========
+                        Container(
+                          height: listHeight,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Theme.of(context).dividerColor),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: ListView.builder(
+                            itemCount: savedSearches.length,
+                            itemBuilder: (context, index) {
+                              final search = savedSearches[index];
+                              final bool isSelected = index == _selectedIndex;
                   final bool isDefault = search.isDefault;
-                  return InkWell(
-                    onTap: () => setState(() => _selectedIndex = index),
-                    child: Container(
-                      color: isSelected
+                              return InkWell(
+                                onTap: () => setState(() => _selectedIndex = index),
+                                child: Container(
+                                  color: isSelected
                         ? Theme.of(context).colorScheme.primary.withAlpha((0.1 * 255).round())
-                        : Colors.transparent,
+                                      : Colors.transparent,
                       padding:
                           const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 28,
-                            child: isDefault
-                                ? const Icon(Icons.star,
-                                    color: Colors.amber, size: 20)
-                                : const SizedBox.shrink(),
-                          ),
-                          Expanded(
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 28,
+                                        child: isDefault
+                                            ? const Icon(Icons.star,
+                                                color: Colors.amber, size: 20)
+                                            : const SizedBox.shrink(),
+                                      ),
+                                      Expanded(
                             child: Text(
                               search.name,
                               style: TextStyle(
@@ -77,134 +169,85 @@ class _SelectSavedSearchDialogState extends State<SelectSavedSearchDialog> {
                                     : null,
                               ),
                             ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-            // ======== SEARCH QUERY ========
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text('Search Query:'),
-            ),
-            const SizedBox(height: 4),
-            SizedBox(
-              width: double.infinity,
-              child: TextField(
-                controller: TextEditingController(
-                    text: selectedSearch?.query ?? ''),
-                enabled: false,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            // ======== SEARCH IN GRID ========
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text('Search In:'),
-            ),
-            const SizedBox(height: 4),
-            _buildSearchInGrid(selectedSearch),
-            const SizedBox(height: 12),
-            // ======== SORT OPTION ========
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Row(
-                children: [
-                  const Text('Sort: '),
-                  Expanded(
-                    child: Text(
-                      _sortDescription(selectedSearch?.sortOption),
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: selectedSearch == null
-              ? null
-              : () async {
-                  if (selectedSearch.isDefault == true) return;
-                  await savedSearchProvider.setDefaultSearch(selectedSearch.id!);
-                  refresh();
-                },
-          child: const Text('Make Default'),
-        ),
-        TextButton(
-          onPressed: () async {
-            await savedSearchProvider.setDefaultSearch(-1);
-            refresh();
-          },
-          child: const Text('Reset Default'),
-        ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Edit',
-              style: TextStyle(
-                decoration: TextDecoration.underline,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(Icons.info_outline, color: Colors.blue.shade600, size: 18),
-          ],
-        ),
-        TextButton(
-          onPressed: selectedSearch == null
-              ? null
-              : () async {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (_) => AlertDialog(
-                      title: const Text('Delete Saved Search'),
-                      content: const Text(
-                          'Are you sure you want to delete this saved search?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: const Text('Cancel'),
                         ),
-                        ElevatedButton(
-                          onPressed: () => Navigator.of(context).pop(true),
-                          child: const Text('OK'),
+                        const SizedBox(height: 12),
+
+                        // ======== SEARCH QUERY ========
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text('Search Query:'),
                         ),
+                        const SizedBox(height: 4),
+                        SizedBox(
+                          width: double.infinity,
+                          child: TextField(
+                            controller: TextEditingController(
+                                text: selectedSearch?.query ?? ''),
+                            enabled: false,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // ======== SEARCH IN GRID ========
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text('Search In:'),
+                        ),
+                        const SizedBox(height: 4),
+                        _buildSearchInGrid(selectedSearch),
+                        const SizedBox(height: 12),
+
+                        // ======== SORT OPTION ========
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            children: [
+                              const Text('Sort: '),
+                              Expanded(
+                                child: Text(
+                                  _sortDescription(selectedSearch?.sortOption),
+                                  style: const TextStyle(fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // ======== ACTION BUTTONS ========
+                        isNarrow ?
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: buttonWidgets
+                                .map((b) => Padding(padding: const EdgeInsets.symmetric(vertical: 4.0), child: b))
+                                .toList(),
+                          )
+                          : Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: buttonWidgets
+                                  .map((b) => SizedBox(width: constraints.maxWidth / 3 - 12, child: b))
+                                  .toList(),
+                            )
                       ],
                     ),
-                  );
+                  ),
+                );
+              },
+            ),
+          ),
 
-                  if (confirm == true) {
-                    await savedSearchProvider.deleteSearch(selectedSearch.id!);
-                    setState(() => _selectedIndex = null);
-                  }
-                },
-          child: const Text('Delete'),
-        ),
-        ElevatedButton(
-          onPressed: selectedSearch == null
-              ? null
-              : () {
-                  albumProvider.applySavedSearch(selectedSearch);
-                  Navigator.of(context).pop(selectedSearch);
-                },
-          child: const Text('Select'),
-        ),
-      ],
+            );
+      },
     );
   }
 
