@@ -72,7 +72,7 @@ class _SelectSavedSearchDialogState extends State<SelectSavedSearchDialog> {
                 size: 18,
               ),
               tooltipMessage:
-                  'To edit a saved search, select it, go back to the search screen, \nmake any changes, and save it as an existing search.',
+                  'To edit a saved search, select it, go back to the search screen, make any changes, and save it as an existing search.',
             ),
           ],
         ),
