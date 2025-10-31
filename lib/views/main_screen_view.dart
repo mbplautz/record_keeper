@@ -428,8 +428,13 @@ class _MainScreenViewState extends State<MainScreenView> {
 
                     try {
                       // Call import service
-                      await ImportService.importCollection(zipFile, database);
+                      final importCount = await ImportService.importCollection(zipFile, database);
                       provider.fetchAllAlbums();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Successfully imported $importCount albums')),
+                        );
+                      }
                     } catch (e) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(

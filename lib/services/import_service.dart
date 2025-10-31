@@ -11,7 +11,7 @@ import 'package:version/version.dart';
 class ImportService {
   static final _requiredMinimumVersion = '1.0.0';
 
-  static Future<void> importCollection(File zipFile, Database db) async {
+  static Future<int> importCollection(File zipFile, Database db) async {
     final tempDir = await getTemporaryDirectory();
     final unzipDir = Directory(p.join(tempDir.path, 'import_temp'));
     if (await unzipDir.exists()) await unzipDir.delete(recursive: true);
@@ -122,6 +122,8 @@ class ImportService {
 
     await importDb.close();
     await unzipDir.delete(recursive: true);
+
+    return albums.length;
   }
 
 }
