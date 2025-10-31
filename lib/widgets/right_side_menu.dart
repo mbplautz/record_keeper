@@ -104,7 +104,7 @@ class _RightSideMenuState extends State<RightSideMenu>
                 sectionKey: 'saved_searches',
                 children: [
                   _buildAction('Save current search', widget.onSaveSearch),
-                  _buildAction('Manage saved searches', widget.onManageSavedSearches),
+                  _buildAction('Load saved search', widget.onManageSavedSearches),
                   _buildAction('Import saved searches', widget.onImportSavedSearches),
                 ],
               ),

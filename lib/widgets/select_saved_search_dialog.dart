@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/saved_search_provider.dart';
 import '../providers/album_provider.dart';
+import 'tooltip_icon.dart';
 
 class SelectSavedSearchDialog extends StatefulWidget {
   const SelectSavedSearchDialog({super.key});
 
   @override
-  State<SelectSavedSearchDialog> createState() => _SelectSavedSearchDialogState();
+  State<SelectSavedSearchDialog> createState() =>
+      _SelectSavedSearchDialogState();
 }
 
 class _SelectSavedSearchDialogState extends State<SelectSavedSearchDialog> {
@@ -21,109 +23,132 @@ class _SelectSavedSearchDialogState extends State<SelectSavedSearchDialog> {
     final savedSearches = savedSearchProvider.savedSearches;
     final selectedSearch =
         _selectedIndex != null && _selectedIndex! < savedSearches.length
-            ? savedSearches[_selectedIndex!]
-            : null;
+        ? savedSearches[_selectedIndex!]
+        : null;
 
     void refresh() => setState(() {});
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 400;
-
-                final buttonWidgets = [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: selectedSearch == null
-                        ? null
-                        : () async {
-                            if (selectedSearch.isDefault == true) return;
-                            await savedSearchProvider.setDefaultSearch(selectedSearch.id!);
-                            refresh();
-                          },
-                    child: const Text('Make Default'),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      await savedSearchProvider.setDefaultSearch(-1);
-                      refresh();
-                    },
-                    child: const Text('Reset Default'),
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        'Edit',
-                        style: TextStyle(
-                          decoration: TextDecoration.underline,
-                        ),
+    final buttonWidgets = [
+      ElevatedButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text('Cancel'),
+      ),
+      ElevatedButton(
+        onPressed: selectedSearch == null
+            ? null
+            : () async {
+                if (selectedSearch.isDefault == true) return;
+                await savedSearchProvider.setDefaultSearch(selectedSearch.id!);
+                refresh();
+              },
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: const Text('Make Default'),
+        ),
+      ),
+      ElevatedButton(
+        onPressed: () async {
+          await savedSearchProvider.setDefaultSearch(-1);
+          refresh();
+        },
+        child: FittedBox(
+          fit: BoxFit.scaleDown, 
+          child: const Text('Reset Default'),
+        )
+      ),
+      Center(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Edit',
+              style: TextStyle(decoration: TextDecoration.underline),
+            ),
+            const SizedBox(width: 4),
+            TooltipIcon(
+              icon: Icon(
+                Icons.info_outline,
+                color: Colors.blue.shade600,
+                size: 18,
+              ),
+              tooltipMessage:
+                  'To edit a saved search, select it, go back to the search screen, \nmake any changes, and save it as an existing search.',
+            ),
+          ],
+        ),
+      ),
+      ElevatedButton(
+        onPressed: selectedSearch == null
+            ? null
+            : () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('Delete Saved Search'),
+                    content: const Text(
+                      'Are you sure you want to delete this saved search?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Cancel'),
                       ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.info_outline, color: Colors.blue.shade600, size: 18),
+                      ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text('OK'),
+                      ),
                     ],
                   ),
-                  TextButton(
-                    onPressed: selectedSearch == null
-                        ? null
-                        : () async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (_) => AlertDialog(
-                                title: const Text('Delete Saved Search'),
-                                content: const Text(
-                                    'Are you sure you want to delete this saved search?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.of(context).pop(false),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () => Navigator.of(context).pop(true),
-                                    child: const Text('OK'),
-                                  ),
-                                ],
-                              ),
-                            );
+                );
 
-                            if (confirm == true) {
-                              await savedSearchProvider.deleteSearch(selectedSearch.id!);
-                              setState(() => _selectedIndex = null);
-                            }
-                          },
-                    child: const Text('Delete'),
-                  ),
-                  ElevatedButton(
-                    onPressed: selectedSearch == null
-                        ? null
-                        : () {
-                  albumProvider.applySavedSearch(selectedSearch);
-                  Navigator.of(context).pop(selectedSearch);
-                          },
-                    child: const Text('Select'),
-                  ),
-                ];
+                if (confirm == true) {
+                  await savedSearchProvider.deleteSearch(selectedSearch.id!);
+                  setState(() => _selectedIndex = null);
+                }
+              },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red,
+          foregroundColor: Colors.white,
+        ),
+        child: const Text('Delete'),
+      ),
+      ElevatedButton(
+        onPressed: selectedSearch == null
+            ? null
+            : () {
+                albumProvider.applySavedSearch(selectedSearch);
+                Navigator.of(context).pop(selectedSearch);
+              },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blue.shade600,
+          foregroundColor: Colors.white,
+        ),
+        child: const Text('Select'),
+      ),
+    ];
 
+    return AlertDialog(
+      title: const Text('Saved Searches'),
+      contentPadding: const EdgeInsets.all(16),
+      content: SizedBox(
+        width: 500,
+        height: 500,
+        child: Column(
+          children: [
+            // Scrollable top portion
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, innerConstraints) {
+                  final availableHeight = innerConstraints.maxHeight.isFinite
+                      ? innerConstraints.maxHeight
+                      : 400.0;
+                  final itemHeight = 40.0;
+                  final listHeight = (availableHeight * 0.3).clamp(
+                    itemHeight * 2,
+                    itemHeight * 5,
+                  );
 
-        return AlertDialog(
-          title: const Text('Saved Searches'),
-          content: SizedBox(
-            width: 500,
-            child: LayoutBuilder(
-              builder: (context, innerConstraints) {
-                // Calculate available height dynamically for ListView
-                final availableHeight = innerConstraints.maxHeight.isFinite
-                    ? innerConstraints.maxHeight
-                    : 400.0;
-                final itemHeight = 40.0;
-                final listHeight =
-                    (availableHeight * 0.3).clamp(itemHeight * 2, itemHeight * 5);
-
-                return SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 500),
+                  return SingleChildScrollView(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -131,7 +156,9 @@ class _SelectSavedSearchDialogState extends State<SelectSavedSearchDialog> {
                         Container(
                           height: listHeight,
                           decoration: BoxDecoration(
-                            border: Border.all(color: Theme.of(context).dividerColor),
+                            border: Border.all(
+                              color: Theme.of(context).dividerColor,
+                            ),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: ListView.builder(
@@ -139,36 +166,45 @@ class _SelectSavedSearchDialogState extends State<SelectSavedSearchDialog> {
                             itemBuilder: (context, index) {
                               final search = savedSearches[index];
                               final bool isSelected = index == _selectedIndex;
-                  final bool isDefault = search.isDefault;
+                              final bool isDefault = search.isDefault;
                               return InkWell(
-                                onTap: () => setState(() => _selectedIndex = index),
+                                onTap: () =>
+                                    setState(() => _selectedIndex = index),
                                 child: Container(
                                   color: isSelected
-                        ? Theme.of(context).colorScheme.primary.withAlpha((0.1 * 255).round())
+                                      ? Theme.of(context).colorScheme.primary
+                                            .withAlpha((0.1 * 255).round())
                                       : Colors.transparent,
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 8,
+                                  ),
                                   child: Row(
                                     children: [
                                       SizedBox(
                                         width: 28,
                                         child: isDefault
-                                            ? const Icon(Icons.star,
-                                                color: Colors.amber, size: 20)
+                                            ? const Icon(
+                                                Icons.star,
+                                                color: Colors.amber,
+                                                size: 20,
+                                              )
                                             : const SizedBox.shrink(),
                                       ),
                                       Expanded(
-                            child: Text(
-                              search.name,
-                              style: TextStyle(
-                                color: isSelected
-                                    ? Theme.of(context)
-                                      .colorScheme
-                                      .onSurface
-                                      .withAlpha((0.9 * 255).round())
-                                    : null,
-                              ),
-                            ),
+                                        child: Text(
+                                          search.name,
+                                          style: TextStyle(
+                                            color: isSelected
+                                                ? Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withAlpha(
+                                                        (0.9 * 255).round(),
+                                                      )
+                                                : null,
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -189,7 +225,8 @@ class _SelectSavedSearchDialogState extends State<SelectSavedSearchDialog> {
                           width: double.infinity,
                           child: TextField(
                             controller: TextEditingController(
-                                text: selectedSearch?.query ?? ''),
+                              text: selectedSearch?.query ?? '',
+                            ),
                             enabled: false,
                             decoration: const InputDecoration(
                               border: OutlineInputBorder(),
@@ -216,38 +253,28 @@ class _SelectSavedSearchDialogState extends State<SelectSavedSearchDialog> {
                               Expanded(
                                 child: Text(
                                   _sortDescription(selectedSearch?.sortOption),
-                                  style: const TextStyle(fontWeight: FontWeight.w500),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        // ======== ACTION BUTTONS ========
-                        isNarrow ?
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: buttonWidgets
-                                .map((b) => Padding(padding: const EdgeInsets.symmetric(vertical: 4.0), child: b))
-                                .toList(),
-                          )
-                          : Wrap(
-                              alignment: WrapAlignment.center,
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: buttonWidgets
-                                  .map((b) => SizedBox(width: constraints.maxWidth / 3 - 12, child: b))
-                                  .toList(),
-                            )
                       ],
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
 
-            );
-      },
+            const SizedBox(height: 12),
+
+            // ======== ACTION BUTTONS ========
+            _buildActionButtonGrid(context, buttonWidgets),
+          ],
+        ),
+      ),
     );
   }
 
@@ -266,7 +293,7 @@ class _SelectSavedSearchDialogState extends State<SelectSavedSearchDialog> {
       'Sort Artist': savedSearch?.searchSortArtist ?? false,
       'Release Date': savedSearch?.searchReleaseDate ?? false,
       'Tracks': savedSearch?.searchTracks ?? false,
-      'Tags': savedSearch?.searchTags ?? false
+      'Tags': savedSearch?.searchTags ?? false,
     };
     return GridView.builder(
       shrinkWrap: true,
@@ -315,5 +342,27 @@ class _SelectSavedSearchDialogState extends State<SelectSavedSearchDialog> {
       default:
         return '';
     }
+  }
+
+  Widget _buildActionButtonGrid(
+    BuildContext context,
+    List<Widget> buttonWidgets,
+  ) {
+    final dialogWidth = MediaQuery.of(context).size.width;
+    int crossAxisCount = 3;
+    if (dialogWidth < 420) crossAxisCount = 2;
+    if (dialogWidth < 320) crossAxisCount = 1;
+
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: crossAxisCount,
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      childAspectRatio: 3.8,
+      children: buttonWidgets
+          .map((b) => SizedBox(width: double.infinity, child: b))
+          .toList(),
+    );
   }
 }
