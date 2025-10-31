@@ -15,7 +15,9 @@ class RightSideMenu extends StatefulWidget {
   final VoidCallback onRemoveAlbums;
   final int totalAlbums;
   final int listedAlbums;
+  final bool visible;
   final VoidCallback onClose;
+  final VoidCallback onHide;
 
   const RightSideMenu({
     super.key,
@@ -31,14 +33,16 @@ class RightSideMenu extends StatefulWidget {
     required this.onRemoveAlbums,
     required this.totalAlbums,
     required this.listedAlbums,
+    required this.visible,
     required this.onClose,
+    required this.onHide
   });
 
   @override
-  State<RightSideMenu> createState() => _RightSideMenuState();
+  State<RightSideMenu> createState() => RightSideMenuState();
 }
 
-class _RightSideMenuState extends State<RightSideMenu>
+class RightSideMenuState extends State<RightSideMenu>
     with TickerProviderStateMixin {
   String? _expandedSection;
 
@@ -52,6 +56,15 @@ class _RightSideMenuState extends State<RightSideMenu>
     setState(() {
       _expandedSection = null;
     });
+  }
+
+  @override
+  void didUpdateWidget(RightSideMenu oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Detect visibility change from true -> false
+    if (oldWidget.visible && !widget.visible) {
+      widget.onHide.call();
+    }
   }
 
   @override
@@ -79,7 +92,7 @@ class _RightSideMenuState extends State<RightSideMenu>
                       ),
                       IconButton(
                         icon: const Icon(Icons.close),
-                        onPressed: widget.onClose,
+                        onPressed: widget.onClose
                       ),
                     ],
                   ),

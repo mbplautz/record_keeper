@@ -44,6 +44,8 @@ class _MainScreenViewState extends State<MainScreenView> {
   // Tag dialog controller
   final TextEditingController _tagController = TextEditingController();
 
+  final GlobalKey<RightSideMenuState> _rightSideMenuKey = GlobalKey<RightSideMenuState>();
+
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
@@ -91,7 +93,13 @@ class _MainScreenViewState extends State<MainScreenView> {
     'tags': 'Tags',
   };
 
-  void _toggleMenu() => setState(() => _menuVisible = !_menuVisible);
+  void _toggleMenu() {
+    if (_menuVisible) {
+      // About to close
+      _rightSideMenuKey.currentState?.collapseAllSections();
+    }
+    setState(() => _menuVisible = !_menuVisible);
+  }
 
   Widget _buildTagAutocomplete(List<String> distinctTags) {
     return Autocomplete<String>(
@@ -378,6 +386,8 @@ class _MainScreenViewState extends State<MainScreenView> {
               top: 0,
               bottom: 0,
               child: RightSideMenu(
+                key: _rightSideMenuKey,
+                visible: _menuVisible,
                 width: min(MediaQuery.of(context).size.width, max(MediaQuery.of(context).size.width * 0.5, 300)),
                 onExportCollection: () async {
                   showDialog(
@@ -555,6 +565,7 @@ class _MainScreenViewState extends State<MainScreenView> {
                 totalAlbums: provider.allAlbums.length,
                 listedAlbums: provider.albums.length,
                 onClose: _toggleMenu,
+                onHide: () {}
               ),
             ),
       ]
