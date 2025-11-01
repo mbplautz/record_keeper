@@ -66,6 +66,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
   List<String> _distinctArtists = [];
   List<String> _distinctSortArtists = [];
   List<String> _distinctTags = [];
+  List<Tag> _newAlbumTags = [];
 
   // Helpers to access providers
   AlbumProvider get _albumProv => context.read<AlbumProvider>();
@@ -391,12 +392,17 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                             }
 
                             // Per spec: case-sensitive duplicate check
-                            final existing = _tagProv.tags;
+                            final existing = _isNew ? _newAlbumTags : _tagProv.tags;
                             final alreadyExists = existing.any((t) => t.tag == text);
                             if (!alreadyExists) {
-                              final tag = Tag(id: null, albumId: _album!.id, tag: text);
-                              await _tagProv.addTag(tag); // persists immediately
-                              _dirtyTags = true;
+                              if (_isNew) {
+                                final tag = Tag(id: null, albumId: _album!.id, tag: text);
+                                _newAlbumTags.add(tag); // persist later on Save/Add
+                              } else {
+                                final tag = Tag(id: null, albumId: _album!.id, tag: text);
+                                await _tagProv.addTag(tag); // persists immediately
+                                _dirtyTags = true;
+                              }
                             }
                             Navigator.of(ctx).pop();
                             if (mounted) setState(() {});
@@ -497,14 +503,19 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
     );
 
     if (_isNew) {
-      // Add new album
-      await _albumProv.addAlbum(updatedAlbum);
+      // Now add tags - do this and tracks before adding album so that they are present when album is loaded
+      for (final tag in _newAlbumTags) {
+        await _tagProv.addTag(tag);
+      }
 
       // Add current local tracks
       for (final tTitle in _localTracks) {
         final newTrack = Track(id: null, albumId: _album!.id, title: tTitle);
         await _trackProv.addTrack(newTrack);
       }
+
+      // Add new album
+      await _albumProv.addAlbum(updatedAlbum);
     } else {
       // Persist album row
       await _albumProv.updateAlbum(updatedAlbum);
@@ -778,7 +789,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
   
   @override
   Widget build(BuildContext context) {
-    final tags = context.watch<TagProvider>().tags;
+    final tags = _isNew ? _newAlbumTags : context.watch<TagProvider>().tags;
 
     return Scaffold(
       appBar: AppBar(
@@ -975,7 +986,12 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                                         GestureDetector(
                                           onTap: () async {
                                             // remove tag immediately
-                                            await _removeTag(tag);
+                                            if (_isNew) {
+                                              _newAlbumTags.remove(tag);
+                                              if (mounted) setState(() {});
+                                            } else {
+                                              await _removeTag(tag);
+                                            }
                                           },
                                           child: const Icon(Icons.close, size: 16, color: Colors.white),
                                         ),
