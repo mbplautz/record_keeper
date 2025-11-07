@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:showcaseview/showcaseview.dart';
 import 'package:record_keeper/models/saved_search.dart';
 
 import '../db/app_database.dart';
@@ -45,6 +46,12 @@ class _MainScreenViewState extends State<MainScreenView> {
   final TextEditingController _tagController = TextEditingController();
 
   final GlobalKey<RightSideMenuState> _rightSideMenuKey = GlobalKey<RightSideMenuState>();
+  final _addAlbumWidgetKey = GlobalKey();
+  final _searchWidgetKey = GlobalKey();
+  final _searchOptionsButtonWidgetKey = GlobalKey();
+  final _sortOptionsButtonWidgetKey = GlobalKey();
+  final _menuButtonWidgetKey = GlobalKey();
+  final _albumsListWidgetKey = GlobalKey();
 
   @override
   void didChangeDependencies() async {
@@ -236,6 +243,7 @@ class _MainScreenViewState extends State<MainScreenView> {
       || provider.currentSort == SortOption.albumAlpha
       || provider.currentSort == SortOption.releaseYear;
 
+    return ShowCaseWidget(builder: (context) {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: () {
@@ -276,6 +284,11 @@ class _MainScreenViewState extends State<MainScreenView> {
               child: Row(
                 children: [
                   // Search bar
+                  Showcase(
+                    key: _searchWidgetKey,
+                    title: 'Search Albums',
+                    description: 'Use this to search and filter your collection. As you add more albums to your collection, you may find this helpful to quickly identify albums in your collection. Refer to "Help" to learn how to do more advanced searches in case you need your searches to be more specifc.',
+                    child:
                   Expanded(
                     child: TextField(
                       controller: _searchController,
@@ -295,7 +308,7 @@ class _MainScreenViewState extends State<MainScreenView> {
                         provider.setSearchQuery(value);
                       },
                     ),
-                  ),
+                  )),
 
                   const SizedBox(width: 8),
 
@@ -546,6 +559,11 @@ class _MainScreenViewState extends State<MainScreenView> {
                   );
                 },
                 onRemoveAlbums: () async {
+                  ShowCaseWidget.of(context).startShowCase([
+                    _addAlbumWidgetKey,
+                    _searchWidgetKey,
+                  ]);
+                  return;
                   final listCount = provider.albums.length;
                   if (listCount == 0) return;
                   final adjective = listCount > 1 ? 'these' : 'this';
@@ -569,7 +587,12 @@ class _MainScreenViewState extends State<MainScreenView> {
             ),
       ]
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: Showcase(
+        key: _addAlbumWidgetKey,
+        title: 'Add Album',
+        description: 'Start your collection by tapping here to add an album. This will prompt you for the album information and cover image. At the very minimum, an album has a name and an artist, but you can get as descriptive as you want!',
+        child:
+      FloatingActionButton(
         onPressed: () {
          // Per requirement 2.2.1.5: navigate to the existing AlbumDetailsView,
           // with a "blank" album (albumId = null) so it opens in edit mode.
@@ -581,8 +604,8 @@ class _MainScreenViewState extends State<MainScreenView> {
         },
         child: const Icon(Icons.add),
       ),
-    )
-    );
+    ))
+    ); });
   }
 
   Future<bool> showConfirmDeleteDialog(BuildContext context,

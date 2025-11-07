@@ -55,6 +55,7 @@ dependencies:
   # UI Enhancement for the Main Screen View
   flutter_slidable: ^4.0.1
   flutter_sticky_header: ^0.8.0
+  showcaseview: ^5.0.1
 
   # Album list import/export
   archive: ^3.6.1
