@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:showcaseview/showcaseview.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -41,6 +42,20 @@ void main() async {
   final tagRepository = TagRepositoryImpl(appDatabase);
   final savedSearchRepository = SavedSearchRepositoryImpl(appDatabase);
 
+  // Register the showcase global settings early
+  ShowcaseView.register(
+    onStart: (index, key) {
+      debugPrint('Showcase onStart: $index, $key');
+    },
+    onComplete: (index, key) {
+      debugPrint('Showcase onComplete: $index, $key');
+    },
+    onDismiss: (key) {
+      debugPrint('Showcase dismissed at $key');
+    },
+    // other optional parameters: blurValue, autoPlayDelay, globalTooltipActions, etc.
+  );
+  
   runApp(MyApp(
     albumRepository: albumRepository,
     trackRepository: trackRepository,

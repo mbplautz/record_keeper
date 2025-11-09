@@ -8,10 +8,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:showcaseview/showcaseview.dart';
-import 'package:record_keeper/models/saved_search.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../db/app_database.dart';
 import '../models/album.dart';
+import '../models/saved_search.dart';
 import '../models/tag.dart';
 import '../providers/album_provider.dart';
 import '../providers/saved_search_provider.dart';
@@ -25,6 +26,7 @@ import '../widgets/grouped_sticky_album_list.dart';
 import '../widgets/right_side_menu.dart';
 import '../widgets/saved_search_dialog.dart';
 import '../widgets/select_saved_search_dialog.dart';
+import '../widgets/welcome_dialog.dart';
 import 'album_details_view.dart';
 
 typedef VoidCallbackFunction = Future<void> Function();
@@ -74,6 +76,41 @@ class _MainScreenViewState extends State<MainScreenView> {
       ImageUtils.applicationDocumentsDirectory = (await getApplicationDocumentsDirectory()).path;
       _isInitialized = true;
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final prefs = await SharedPreferences.getInstance();
+      final shouldShow = prefs.getBool('showWelcome') ?? true;
+      var showValue = shouldShow;
+      if (shouldShow) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => WelcomeDialog(
+            onShowTour: () async {
+              if (showValue != shouldShow) {
+                await prefs.setBool('showWelcome', showValue);
+              }
+              ShowcaseView.get().startShowCase([
+                _addAlbumWidgetKey,
+                _searchWidgetKey,
+              ]);
+            },
+            onClose: () async{
+              if (showValue != shouldShow) {
+                await prefs.setBool('showWelcome', showValue);
+              }
+            },
+            onCheckChanged: (bool value) {
+              showValue = value;
+            },
+          ),
+        );
+      }
+    });
   }
 
   String _sortOptionLabel(SortOption option) {
@@ -243,7 +280,7 @@ class _MainScreenViewState extends State<MainScreenView> {
       || provider.currentSort == SortOption.albumAlpha
       || provider.currentSort == SortOption.releaseYear;
 
-    return ShowCaseWidget(builder: (context) {
+    /*return ShowCaseWidget(builder: (context) {*/
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: () {
@@ -559,11 +596,6 @@ class _MainScreenViewState extends State<MainScreenView> {
                   );
                 },
                 onRemoveAlbums: () async {
-                  ShowCaseWidget.of(context).startShowCase([
-                    _addAlbumWidgetKey,
-                    _searchWidgetKey,
-                  ]);
-                  return;
                   final listCount = provider.albums.length;
                   if (listCount == 0) return;
                   final adjective = listCount > 1 ? 'these' : 'this';
@@ -605,7 +637,7 @@ class _MainScreenViewState extends State<MainScreenView> {
         child: const Icon(Icons.add),
       ),
     ))
-    ); });
+    ); //});
   }
 
   Future<bool> showConfirmDeleteDialog(BuildContext context,
