@@ -351,6 +351,9 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
 
   // Display Add Tag dialog per spec (centered). On OK: persist tag immediately.
   Future<void> _showAddTagDialog() async {
+    // Hide keyboard and clear any text field focus
+    FocusScope.of(context).unfocus();
+
     _tagController.clear();
     await showDialog<void>(
       context: context,
@@ -791,7 +794,12 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
   Widget build(BuildContext context) {
     final tags = _isNew ? _newAlbumTags : context.watch<TagProvider>().tags;
 
-    return Scaffold(
+    return GestureDetector(
+    behavior: HitTestBehavior.translucent, // capture taps on empty space too
+    onTap: () {
+      FocusScope.of(context).unfocus(); // hide keyboard
+    },
+    child: Scaffold(
       appBar: AppBar(
         title: Text(_headerText),
         centerTitle: true,
@@ -1030,7 +1038,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                 ),
               ],
             ),
-    );
+    ));
   }
 
   Widget _buildReleaseDateInputs() {
