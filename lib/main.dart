@@ -44,7 +44,7 @@ void main() async {
 
   // Register the showcase global settings early
   ShowcaseView.register(
-    onStart: (index, key) {
+/*    onStart: (index, key) {
       debugPrint('Showcase onStart: $index, $key');
     },
     onComplete: (index, key) {
@@ -53,7 +53,7 @@ void main() async {
     onDismiss: (key) {
       debugPrint('Showcase dismissed at $key');
     },
-    // other optional parameters: blurValue, autoPlayDelay, globalTooltipActions, etc.
+    // other optional parameters: blurValue, autoPlayDelay, globalTooltipActions, etc.*/
   );
   
   runApp(MyApp(

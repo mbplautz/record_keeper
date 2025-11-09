@@ -53,7 +53,7 @@ class _MainScreenViewState extends State<MainScreenView> {
   final _searchOptionsButtonWidgetKey = GlobalKey();
   final _sortOptionsButtonWidgetKey = GlobalKey();
   final _menuButtonWidgetKey = GlobalKey();
-  final _albumsListWidgetKey = GlobalKey();
+//  final _albumsListWidgetKey = GlobalKey(); // I don't think I actually need a showcase for this
 
   @override
   void didChangeDependencies() async {
@@ -266,10 +266,15 @@ class _MainScreenViewState extends State<MainScreenView> {
         title: const Text("Record Keeper"),
         centerTitle: true,
         actions: [
-          IconButton(
+          Showcase(
+            key: _menuButtonWidgetKey,
+            title: 'Menu',
+            description: 'Access additional options such as importing/exporting your collection, saving and managing searches, getting help, and more.',  
+            child:
+            IconButton(
             icon: const Icon(Icons.menu),
             onPressed: _toggleMenu,
-          ),
+          )),
         ],
       ),
       body: Stack(
@@ -323,6 +328,11 @@ class _MainScreenViewState extends State<MainScreenView> {
                   const SizedBox(width: 8),
 
                   // Search Settings Popup Menu
+                  Showcase(
+                    key: _searchOptionsButtonWidgetKey,
+                    title: 'Search Settings',
+                    description: 'Use this menu to customize which fields are included in your search. You can choose to search by title, artist, release date, tags, and more. At least one search field must be selected at all times.',
+                    child:
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.filter_alt),
                     onSelected: (key) {
@@ -349,11 +359,16 @@ class _MainScreenViewState extends State<MainScreenView> {
                         child: Text(_searchOptionsLabels[key]!),
                       );
                     }).toList(),
-                  ),
+                  )),
 
                   const SizedBox(width: 8),
 
                   // Sort Settings Popup Menu
+                  Showcase(
+                    key: _sortOptionsButtonWidgetKey,
+                    title: 'Sort Options',
+                    description: 'Use this menu to change how your albums are sorted in the list below. You can sort by artist, release date, alphabetically, or even randomly.',
+                    child:
                   PopupMenuButton<SortOption>(
                     icon: Transform.rotate(
                       angle: 1.570796,
@@ -369,7 +384,7 @@ class _MainScreenViewState extends State<MainScreenView> {
                         child: Text(_sortOptionLabel(option)),
                       );
                     }).toList(),
-                  ),
+                  )),
                 ],
               ),
             ),
@@ -598,7 +613,7 @@ class _MainScreenViewState extends State<MainScreenView> {
       floatingActionButton: Showcase(
         key: _addAlbumWidgetKey,
         title: 'Add Album',
-        description: 'Start your collection by tapping here to add an album. This will prompt you for the album information and cover image. At the very minimum, an album has a name and an artist, but you can get as descriptive as you want!',
+        description: 'Start your collection by tapping here to add an album. This will prompt you for the album information and cover image. At the very minimum, an album has a name and an artist, but feel free get as descriptive as you please.',
         child:
       FloatingActionButton(
         onPressed: () {
@@ -633,6 +648,9 @@ class _MainScreenViewState extends State<MainScreenView> {
             ShowcaseView.get().startShowCase([
               _addAlbumWidgetKey,
               _searchWidgetKey,
+              _searchOptionsButtonWidgetKey,
+              _sortOptionsButtonWidgetKey,
+              _menuButtonWidgetKey,
             ]);
           },
           onClose: () async{
