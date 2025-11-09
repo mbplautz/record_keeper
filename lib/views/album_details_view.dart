@@ -600,8 +600,10 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
 
   Widget _buildAlbumImageSection(BuildContext context) {
     final media = MediaQuery.of(context);
-    final sectionHeight = (media.size.height / 3).clamp(0, 400).toDouble();
-    final squareSize = sectionHeight;
+    final fullSectionHeight = (media.size.height / 3).clamp(0, 400).toDouble();
+    final squareSize = fullSectionHeight;
+    final bool keyboardVisible = media.viewInsets.bottom > 0;
+    final sectionHeight = keyboardVisible ? fullSectionHeight / 2 : fullSectionHeight;
 
     final imageWidget = _pickedImageFile != null
         ? Image.file(File(_pickedImageFile!.path), fit: BoxFit.cover, width: squareSize, height: squareSize)
@@ -619,10 +621,12 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                 ),
               ));
 
-    return Container(
+    return AnimatedContainer(
       width: double.infinity,
       height: sectionHeight,
       color: Colors.grey[350],
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
       child: Center(
         child: Stack(
           alignment: Alignment.center,
