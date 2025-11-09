@@ -82,34 +82,7 @@ class _MainScreenViewState extends State<MainScreenView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final prefs = await SharedPreferences.getInstance();
-      final shouldShow = prefs.getBool('showWelcome') ?? true;
-      var showValue = shouldShow;
-      if (shouldShow) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => WelcomeDialog(
-            onShowTour: () async {
-              if (showValue != shouldShow) {
-                await prefs.setBool('showWelcome', showValue);
-              }
-              ShowcaseView.get().startShowCase([
-                _addAlbumWidgetKey,
-                _searchWidgetKey,
-              ]);
-            },
-            onClose: () async{
-              if (showValue != shouldShow) {
-                await prefs.setBool('showWelcome', showValue);
-              }
-            },
-            onCheckChanged: (bool value) {
-              showValue = value;
-            },
-          ),
-        );
-      }
+      showWelcomeDialog();
     });
   }
 
@@ -614,6 +587,9 @@ class _MainScreenViewState extends State<MainScreenView> {
                 },
                 totalAlbums: provider.allAlbums.length,
                 listedAlbums: provider.albums.length,
+                onShowWelcomeDialog: () async {
+                  showWelcomeDialog(forceShow: true);
+                },
                 onClose: _toggleMenu,
               ),
             ),
@@ -638,6 +614,38 @@ class _MainScreenViewState extends State<MainScreenView> {
       ),
     ))
     ); //});
+  }
+
+  void showWelcomeDialog({ bool forceShow = false }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final shouldShow = prefs.getBool('showWelcome') ?? true;
+    var showValue = shouldShow;
+    if (shouldShow || forceShow) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => WelcomeDialog(
+          checkboxInitialValue: shouldShow,
+          onShowTour: () async {
+            if (showValue != shouldShow) {
+              await prefs.setBool('showWelcome', showValue);
+            }
+            ShowcaseView.get().startShowCase([
+              _addAlbumWidgetKey,
+              _searchWidgetKey,
+            ]);
+          },
+          onClose: () async{
+            if (showValue != shouldShow) {
+              await prefs.setBool('showWelcome', showValue);
+            }
+          },
+          onCheckChanged: (bool value) {
+            showValue = value;
+          },
+        ),
+      );
+    }
   }
 
   Future<bool> showConfirmDeleteDialog(BuildContext context,

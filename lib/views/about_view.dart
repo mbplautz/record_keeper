@@ -3,7 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class AboutView extends StatelessWidget {
-  const AboutView({super.key});
+  final VoidCallback onShowWelcomeDialog;
+
+  const AboutView({
+    super.key,
+    required this.onShowWelcomeDialog,
+  });
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
@@ -114,6 +119,20 @@ class AboutView extends StatelessWidget {
             label: 'Flutter UI',
             url: 'https://flutter.dev',
           ),
+
+          // Welcome dialog button
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                onShowWelcomeDialog();
+              },
+              child: const Text('Show Welcome Dialog'),
+            ),
+          ),
+
         ],
       ),
     );

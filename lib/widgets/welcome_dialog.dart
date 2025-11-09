@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 class WelcomeDialog extends StatefulWidget {
+  final bool checkboxInitialValue;
   final VoidCallback onShowTour;
   final VoidCallback onClose;
   final void Function (bool) onCheckChanged;
 
   const WelcomeDialog({
     super.key,
+    required this.checkboxInitialValue,
     required this.onShowTour,
     required this.onClose,
     required this.onCheckChanged,
@@ -19,6 +21,12 @@ class WelcomeDialog extends StatefulWidget {
 
 class _WelcomeDialogState extends State<WelcomeDialog> {
   bool _showWelcome = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _showWelcome = widget.checkboxInitialValue;
+  }
 
   Future<void> _handleClose({bool startTour = false}) async {
     Navigator.of(context).pop();

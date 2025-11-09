@@ -16,6 +16,7 @@ class RightSideMenu extends StatefulWidget {
   final int totalAlbums;
   final int listedAlbums;
   final bool visible;
+  final VoidCallback onShowWelcomeDialog;
   final VoidCallback onClose;
 
   const RightSideMenu({
@@ -33,6 +34,7 @@ class RightSideMenu extends StatefulWidget {
     required this.totalAlbums,
     required this.listedAlbums,
     required this.visible,
+    required this.onShowWelcomeDialog,
     required this.onClose,
   });
 
@@ -216,7 +218,9 @@ class RightSideMenuState extends State<RightSideMenu>
 //      print("About pressed"); // Replace with actual about dialog logic
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const AboutView()),
+        MaterialPageRoute(builder: (_) => AboutView(
+          onShowWelcomeDialog: widget.onShowWelcomeDialog,
+        )),
       );
     };
   }
