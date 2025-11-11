@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../views/about_view.dart';
 
@@ -138,6 +139,25 @@ class RightSideMenuState extends State<RightSideMenu>
                   });
                   widget.onClose(); // hide menu before performing action
                   _onAboutPressed().call();
+                },
+              ),
+              const Divider(),
+              ListTile(
+                dense: true,
+                title: Text(
+                  'Help',
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+                ),
+                onTap: () async {
+                  setState(() {
+                    _expandedSection = null; // collapse section
+                  });
+                  widget.onClose(); // hide menu before performing action
+                  final url = 'https://github.com/mbplautz/record_keeper?tab=readme-ov-file#record_keeper';
+                  final uri = Uri.parse(url);
+                  if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+                    throw Exception('Could not launch $url');
+                  }
                 },
               ),
             ],
