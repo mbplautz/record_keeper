@@ -416,6 +416,17 @@ class _MainScreenViewState extends State<MainScreenView> {
           ],
         )
       ),
+      if (_menuVisible)
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: _toggleMenu,
+            child: Container(
+              color: Colors.black.withAlpha(32), // mostly transparent
+            ),
+          ),
+        ),
+
           // Slide-in menu overlay
             AnimatedPositioned(
               duration: const Duration(milliseconds: 350),
