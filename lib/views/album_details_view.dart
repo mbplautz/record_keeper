@@ -651,11 +651,12 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                               title: const Text('Choose from gallery'),
                               onTap: () => Navigator.of(ctx).pop('gallery'),
                             ),
-                            ListTile(
-                              leading: const Icon(Icons.camera_alt),
-                              title: const Text('Take photo'),
-                              onTap: () => Navigator.of(ctx).pop('camera'),
-                            ),
+                            if (Platform.isAndroid || Platform.isIOS)
+                              ListTile(
+                                leading: const Icon(Icons.camera_alt),
+                                title: const Text('Take photo'),
+                                onTap: () => Navigator.of(ctx).pop('camera'),
+                              ),
                             ListTile(
                               leading: const Icon(Icons.close),
                               title: const Text('Cancel'),

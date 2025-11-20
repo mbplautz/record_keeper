@@ -1,6 +1,7 @@
 // lib/utils/image_utils.dart
 
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_cropper/image_cropper.dart';
@@ -31,6 +32,8 @@ class ImageUtils {
       sourcePath: pickedFile.path,
       aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
 //      compressQuality: 90,
+      maxWidth: 600,
+      maxHeight: 600,
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: 'Crop Image',
@@ -46,8 +49,38 @@ class ImageUtils {
       ],
     );
 
+    // If the cropper returns null, user cancelled:
     if (croppedFile == null) return null;
-    return File(croppedFile.path);
+    // return File(croppedFile.path);
+
+    // Force a post-process resize to guarantee max pixels
+    final file = File(croppedFile.path);
+    final bytes = await file.readAsBytes();
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) return file; // decoding failed, just return
+
+    final maxDim = 600;
+    if (decoded.width > maxDim || decoded.height > maxDim) {
+      final scale = math.min(maxDim / decoded.width, maxDim / decoded.height);
+      final newW = (decoded.width * scale).round();
+      final newH = (decoded.height * scale).round();
+
+      final resized = img.copyResize(
+        decoded,
+        width: newW,
+        height: newH,
+        interpolation: img.Interpolation.cubic,
+      );
+
+      final ext = p.extension(file.path).toLowerCase();
+      final outBytes = (ext == '.png')
+          ? img.encodePng(resized)
+          : img.encodeJpg(resized, quality: 90);
+
+      await file.writeAsBytes(outBytes, flush: true);
+    }
+
+    return file;
   }
 
   /// Save an image to the app's documents directory.
