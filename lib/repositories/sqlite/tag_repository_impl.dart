@@ -41,10 +41,7 @@ class TagRepositoryImpl implements TagRepository {
   @override
   Future<List<String>> getDistinctTagList() async {
     final db = await _db.database;
-    final result = await db.query('tags', 
-      distinct: true,
-      columns: ['tag']
-    );
+    final result = await db.rawQuery('SELECT tag, COUNT(tag) AS tag_count FROM tags GROUP BY tag ORDER BY 2 DESC');
     return result.map((m) => m['tag'] as String).toList();
   }
 

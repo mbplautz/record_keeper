@@ -125,8 +125,7 @@ class _MainScreenViewState extends State<MainScreenView> {
         final lower = val.text.toLowerCase();
         return distinctTags
             .where((a) => a.toLowerCase().contains(lower))
-            .toList()
-          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+            .toList();
       },
       onSelected: (selection) => _tagController.text = selection,
       fieldViewBuilder: (ctx, ctrl, focus, onSubmit) {

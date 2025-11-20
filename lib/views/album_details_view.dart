@@ -773,8 +773,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
         final lower = val.text.toLowerCase();
         return _distinctTags
             .where((a) => a.toLowerCase().contains(lower))
-            .toList()
-          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+            .toList();
       },
       onSelected: (selection) => _tagController.text = selection,
       fieldViewBuilder: (ctx, ctrl, focus, onSubmit) {
