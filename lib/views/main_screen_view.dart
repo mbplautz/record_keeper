@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
@@ -441,22 +442,38 @@ class _MainScreenViewState extends State<MainScreenView> {
                   showDialog(
                     context: context,
                     barrierDismissible: false,
-                    builder: (_) => const Center(
-                      child: CircularProgressIndicator(),
+                    builder: (_) => AlertDialog( content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(), 
+                          SizedBox(height: 16),
+                          Text('Exporting')
+                        ], 
+                      ),
                     ),
                   );
+
+                  await Future.delayed(Duration.zero);
 
                   try {
                     final dbPath = await getDatabasePath();
                     final imageDirPath = await getImagesDirectoryPath();
                     final thumbnailDirPath = await getThumbnailsDirectoryPath();
-
-                    await ExportService.exportCollection(
-                      databasePath: dbPath,
-                      imagesDirectoryPath: imageDirPath,
-                      thumbnailsDirectoryPath: thumbnailDirPath,
-                      context: context,
+                    final tempDir = await getTemporaryDirectory();
+                    final zipPath = '${tempDir.path}/record_collection_export.zip';
+                    
+                    await compute(
+                      exportCollectionIsolate,
+                      {
+                      'databasePath': dbPath,
+                      'imagesDirectoryPath': imageDirPath,
+                      'thumbnailsDirectoryPath': thumbnailDirPath,
+                      'tempDir': tempDir.path,
+                      'zipPath': zipPath
+                      }
                     );
+
+                    await ExportService.shareExportedFile(zipPath, context);
 
                     if (context.mounted) {
                       Navigator.of(context).pop(); // remove spinner
@@ -730,3 +747,20 @@ class _MainScreenViewState extends State<MainScreenView> {
         false; // if dismissed, treat as false
   }
 }
+
+void exportCollectionIsolate(Map<String, dynamic> args) {
+  final databasePath = args['databasePath'] as String;
+  final imagesDirectoryPath = args['imagesDirectoryPath'] as String;
+  final thumbnailsDirectoryPath = args['thumbnailsDirectoryPath'] as String;
+  final tempDir = args['tempDir'] as String;
+  final zipPath = args['zipPath'] as String;
+
+  ExportService.exportCollection(
+    databasePath: databasePath,
+    imagesDirectoryPath: imagesDirectoryPath,
+    thumbnailsDirectoryPath: thumbnailsDirectoryPath,
+    tempDir: tempDir,
+    zipPath: zipPath,
+  );
+}
+
