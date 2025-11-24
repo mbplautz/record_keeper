@@ -153,7 +153,7 @@ class RightSideMenuState extends State<RightSideMenu>
                     _expandedSection = null; // collapse section
                   });
                   widget.onClose(); // hide menu before performing action
-                  final url = 'https://github.com/mbplautz/record_keeper?tab=readme-ov-file#record_keeper';
+                  final url = 'https://github.com/mbplautz/record_keeper?tab=readme-ov-file#Record%20Keeper';
                   final uri = Uri.parse(url);
                   if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
                     throw Exception('Could not launch $url');

@@ -1,4 +1,6 @@
-# Record Keeper — User Guide & Help
+# Record Keeper
+
+## User Guide & Help
 
 _(Markdown help file for the Record Keeper app — thorough, step-by-step)_
 
