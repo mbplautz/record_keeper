@@ -422,7 +422,7 @@ class _MainScreenViewState extends State<MainScreenView> {
             behavior: HitTestBehavior.translucent,
             onTap: _toggleMenu,
             child: Container(
-              color: Colors.black.withAlpha(32), // mostly transparent
+              color: Colors.black.withAlpha(64), // mostly transparent
             ),
           ),
         ),
