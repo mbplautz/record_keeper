@@ -9,7 +9,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:version/version.dart';
 
 class ImportService {
-  static final _requiredMinimumVersion = '1.0.0';
+  static final _maximumSupportedVersion = '1.0.0';
 
   static Future<int> importCollection(File zipFile, Database db) async {
     final tempDir = await getTemporaryDirectory();
@@ -42,9 +42,9 @@ class ImportService {
       await unzipDir.delete(recursive: true);
       throw Exception("Invalid import: Incorrect manifest content");
     }
-    final minimumVersion = Version.parse(_requiredMinimumVersion);
+    final maximumVersion = Version.parse(_maximumSupportedVersion);
     final importVersion = Version.parse(manifest['version'] ?? '0.0.0');
-    if (importVersion < minimumVersion) {
+    if (importVersion.major > maximumVersion.major) {
       await unzipDir.delete(recursive: true);
       throw Exception("Incompatible import: Export was created with a newer version of the app");
     }
