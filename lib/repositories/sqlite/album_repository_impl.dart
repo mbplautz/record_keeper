@@ -133,13 +133,13 @@ class AlbumRepositoryImpl implements AlbumRepository {
       INSERT INTO tags (album_id, tag)
       SELECT DISTINCT id, ? AS tag FROM albums
       INNER JOIN (
-        SELECT album_id FROM (
-          SELECT albums.id AS album_id, COALESCE(tag, '') AS tag
-          FROM albums
-          LEFT OUTER JOIN tags
+        SELECT id AS album_id 
+        FROM albums WHERE id NOT IN (
+          SELECT albums.id FROM albums
+          INNER JOIN tags
           ON albums.id = tags.album_id
-        ) AS album_tags
-        WHERE tag <> ?
+          WHERE tags.tag = ?
+        )
       ) AS tags ON albums.id = tags.album_id
       WHERE albums.id IN ($placeholders);
     ''';
