@@ -34,6 +34,8 @@ class AlbumProvider extends ChangeNotifier {
     'tags': true,
   };
   final _strippedRegex = RegExp(r'[^A-Za-z0-9 ]+');
+  final _quoteRegex = RegExp(r'[“”„‟❝❞«»]');
+  final _singleQuoteRegex = RegExp(r"[‘’‚‛`´ʼʽʾ]");
 
   AlbumProvider(this._repo, this._trackRepo, this._tagRepo);
 
@@ -189,7 +191,7 @@ class AlbumProvider extends ChangeNotifier {
     final minusTerms = <String>[];
 
     final regex = RegExp(r'([+-]?"(?:\\.|[^"])*"|[^\s]+)');
-    for (final match in regex.allMatches(query)) {
+    for (final match in regex.allMatches(_escapeSingleQuotes(query.replaceAll(_quoteRegex, '"')))) {
       var token = match.group(0)!;
 
       bool isPlus = token.startsWith('+');
@@ -232,7 +234,7 @@ class AlbumProvider extends ChangeNotifier {
     List<String> minusTerms,
   ) {
     return albums.where((album) {
-      final searchableText = _buildSearchableText(album).toLowerCase();
+      final searchableText = _escapeSingleQuotes(_buildSearchableText(album).toLowerCase());
 
       // Required terms (+)
       if (plusTerms.any((t) => !searchableText.contains(t))) {
@@ -403,5 +405,12 @@ class AlbumProvider extends ChangeNotifier {
     final stripped = input.replaceAll(_strippedRegex, '');
     // Collapse multiple spaces and trim ends to normalize the result.
     return stripped.replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
+
+  /// Normalize various single-quote characters (including backtick) to the
+  /// standard ASCII single-quote (').
+  String _escapeSingleQuotes(String s) {
+    if (s.isEmpty) return s;
+    return s.replaceAll(_singleQuoteRegex, "'");
   }
 }
