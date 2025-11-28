@@ -101,6 +101,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
+        navigatorObservers: [UnfocusOnPopObserver()],
         title: 'Record Keeper',
         theme: ThemeData(
           primarySwatch: Colors.blue,
@@ -108,5 +109,16 @@ class MyApp extends StatelessWidget {
         home: const MainScreenView(),
       ),
     );
+  }
+}
+
+class UnfocusOnPopObserver extends NavigatorObserver {
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    // Schedule unfocus AFTER the new route finishes rebuilding
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusManager.instance.primaryFocus?.unfocus();
+    });
+    super.didPop(route, previousRoute);
   }
 }
