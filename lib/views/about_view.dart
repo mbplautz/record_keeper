@@ -66,6 +66,29 @@ class AboutView extends StatelessWidget {
               'Distributed by Bryan Ratledge',
               style: TextStyle(fontSize: 16),
             ),
+          const SizedBox(height: 8),
+          Wrap(
+            alignment: WrapAlignment.start,
+            children: [
+              const Text('Please ', style: TextStyle(fontSize: 16)),
+              const Text('contact ', style: TextStyle(fontSize: 16)),
+              GestureDetector(
+                onTap: () => _launchUrl('mailto:support@backgroundnoise.cc'),
+                child: const Text(
+                  'support@backgroundnoise.cc',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.blue,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+              const Text(' for ', style: TextStyle(fontSize: 16)),
+              const Text('support ', style: TextStyle(fontSize: 16)),
+              const Text('or ', style: TextStyle(fontSize: 16)),
+              const Text('feedback.', style: TextStyle(fontSize: 16)),
+            ],
+          ),
           const SizedBox(height: 16),
 
           // Description with hyperlinks
