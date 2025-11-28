@@ -33,6 +33,7 @@ class AlbumProvider extends ChangeNotifier {
     'tracks': true,
     'tags': true,
   };
+  final _strippedRegex = RegExp(r'[^A-Za-z0-9 ]+');
 
   AlbumProvider(this._repo, this._trackRepo, this._tagRepo);
 
@@ -312,9 +313,9 @@ class AlbumProvider extends ChangeNotifier {
         }
         break;
       case SortOption.albumAlpha:
-        sorted.sort((a, b) => ciCompare(a.title, b.title));
+        sorted.sort((a, b) => ciCompare(_stripped(a.title), _stripped(b.title)));
         for (var album in sorted) {
-          album.headerKey = album.title[0].toUpperCase();
+          album.headerKey = _stripped(album.title)[0].toUpperCase();
         }
         break;
       case SortOption.releaseYear:
@@ -392,5 +393,15 @@ class AlbumProvider extends ChangeNotifier {
       'December'
     ];
     return names[month - 1];
+  }
+
+  /// Strip a string of all symbols, leaving only letters (A-Z, a-z), numbers and spaces.
+  ///
+  /// Example: "Hello, World! #1" -> "Hello World 1"
+  String _stripped(String input) {
+    // Remove any character that is not A-Z, a-z, 0-9 or space.
+    final stripped = input.replaceAll(_strippedRegex, '');
+    // Collapse multiple spaces and trim ends to normalize the result.
+    return stripped.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
 }
