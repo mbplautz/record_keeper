@@ -9,6 +9,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../models/album.dart';
+
 class ImageUtils {
   static final ImagePicker _picker = ImagePicker();
   static final ImageCropper _cropper = ImageCropper();
@@ -166,5 +168,16 @@ class ImageUtils {
       height: height,
       fit: BoxFit.cover,
     );
+  }
+
+  static Future<void> deleteImageList(List<Album> albumList) async {
+    for (final album in albumList) {
+      if (album.coverImagePath != null) {
+        await deleteImage(album.coverImagePath!);
+      }
+      if (album.coverThumbnailPath != null) {
+        await deleteImage(album.coverThumbnailPath!);
+      }
+    }
   }
 }

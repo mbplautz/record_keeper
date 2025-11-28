@@ -522,6 +522,7 @@ class _MainScreenViewState extends State<MainScreenView> {
                 onDeleteCollection: () async {
                   final confirm = await showConfirmDeleteDialog(context);
                   if (confirm) {
+                    await ImageUtils.deleteImageList(provider.allAlbums);
                     await provider.deleteAllAlbums();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('All albums deleted')),
@@ -621,6 +622,7 @@ class _MainScreenViewState extends State<MainScreenView> {
                     text: 'Are you sure you want to delete $adjective $listCount album$plural? This action cannot be undone.'
                   );
                   if (confirm) {
+                    await ImageUtils.deleteImageList(provider.albums);
                     await provider.deleteAlbumList();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('$listCount album$plural deleted')),
