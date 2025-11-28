@@ -20,6 +20,7 @@ import 'repositories/sqlite/tag_repository_impl.dart';
 import 'providers/album_provider.dart';
 import 'providers/track_provider.dart';
 import 'providers/tag_provider.dart';
+import 'utils/app_version.dart';
 import 'views/main_screen_view.dart';
 
 void main() async {
@@ -55,6 +56,8 @@ void main() async {
     },
     // other optional parameters: blurValue, autoPlayDelay, globalTooltipActions, etc.*/
   );
+
+  await AppVersion.load();
   
   runApp(MyApp(
     albumRepository: albumRepository,

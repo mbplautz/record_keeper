@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:record_keeper/utils/app_version.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -461,6 +462,7 @@ class _MainScreenViewState extends State<MainScreenView> {
                     final thumbnailDirPath = await getThumbnailsDirectoryPath();
                     final tempDir = await getTemporaryDirectory();
                     final zipPath = '${tempDir.path}/record_collection_export.zip';
+                    final version = AppVersion.version;
                     
                     await compute(
                       exportCollectionIsolate,
@@ -469,7 +471,8 @@ class _MainScreenViewState extends State<MainScreenView> {
                       'imagesDirectoryPath': imageDirPath,
                       'thumbnailsDirectoryPath': thumbnailDirPath,
                       'tempDir': tempDir.path,
-                      'zipPath': zipPath
+                      'zipPath': zipPath,
+                      'version': version,
                       }
                     );
 
@@ -756,6 +759,7 @@ void exportCollectionIsolate(Map<String, dynamic> args) {
   final thumbnailsDirectoryPath = args['thumbnailsDirectoryPath'] as String;
   final tempDir = args['tempDir'] as String;
   final zipPath = args['zipPath'] as String;
+  final version = args['version'] as String;
 
   ExportService.exportCollection(
     databasePath: databasePath,
@@ -763,6 +767,7 @@ void exportCollectionIsolate(Map<String, dynamic> args) {
     thumbnailsDirectoryPath: thumbnailsDirectoryPath,
     tempDir: tempDir,
     zipPath: zipPath,
+    manifestVersion: version
   );
 }
 

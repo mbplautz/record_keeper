@@ -2,6 +2,8 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../utils/app_version.dart';
+
 class AboutView extends StatelessWidget {
   final VoidCallback onShowWelcomeDialog;
 
@@ -23,6 +25,8 @@ class AboutView extends StatelessWidget {
     if (width > 300) {
       width = 300;
     }
+
+    final versionNumber = AppVersion.version;
 
     return Scaffold(
       appBar: AppBar(
@@ -55,7 +59,7 @@ class AboutView extends StatelessWidget {
 
           // Version text
           Text(
-            'Version 1.0.0',
+            'Version $versionNumber',
             style: TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 8),
