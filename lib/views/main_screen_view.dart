@@ -187,8 +187,8 @@ class _MainScreenViewState extends State<MainScreenView> {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: alternativeCallback ?? () async {
-                            final text = _tagController.text;
-                            if (text.trim().isEmpty) {
+                            final text = _tagController.text.trim();
+                            if (text.isEmpty) {
                               Navigator.of(ctx).pop();
                               return;
                             }
@@ -583,8 +583,8 @@ class _MainScreenViewState extends State<MainScreenView> {
                   await _showAddTagDialog("", provider, 
                     alternativeTitle: 'Add Tag to List',
                     alternativeCallback: () async {
-                      final text = _tagController.text;
-                      if (text.trim().isEmpty) {
+                      final text = _tagController.text.trim();
+                      if (text.isEmpty) {
                         Navigator.of(context).pop();
                         return;
                       }
@@ -599,8 +599,8 @@ class _MainScreenViewState extends State<MainScreenView> {
                   await _showAddTagDialog("", provider, 
                     alternativeTitle: 'Remove Tag from List',
                     alternativeCallback: () async {
-                      final text = _tagController.text;
-                      if (text.trim().isEmpty) {
+                      final text = _tagController.text.trim();
+                      if (text.isEmpty) {
                         Navigator.of(context).pop();
                         return;
                       }

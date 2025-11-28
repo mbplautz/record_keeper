@@ -388,8 +388,8 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () async {
-                            final text = _tagController.text;
-                            if (text.trim().isEmpty) {
+                            final text = _tagController.text.trim();
+                            if (text.isEmpty) {
                               Navigator.of(ctx).pop();
                               return;
                             }
