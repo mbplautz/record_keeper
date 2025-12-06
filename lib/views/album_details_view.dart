@@ -13,6 +13,7 @@ import '../providers/album_provider.dart';
 import '../providers/track_provider.dart';
 import '../providers/tag_provider.dart';
 import '../utils/image_utils.dart';
+import '../widgets/tooltip_icon.dart';
 
 class AlbumDetailsView extends StatefulWidget {
   /// If albumId is null, this view is creating a new album (starts in edit mode).
@@ -81,7 +82,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
     _startedInViewMode = !_isNew && !widget.editMode;
 
     // Form validation: watch text controllers
-    _isFormValidNotifier = ValueNotifier<bool>(_isFormValid());
+    _isFormValidNotifier = ValueNotifier<bool>(_isFormValid().$1);
 
     for (final c in [
       _titleController,
@@ -92,7 +93,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
       c.addListener(() {
         Future.microtask(() {
           if (mounted) {
-            _isFormValidNotifier.value = _isFormValid();
+            _isFormValidNotifier.value = _isFormValid().$1;
           }
         });
       });
@@ -244,11 +245,24 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
     return ValueListenableBuilder<bool>(
       valueListenable: _isFormValidNotifier, 
       builder: (context, isValid, child) {
-        final enabled = !_isEditMode || _isFormValid(); //isValid; //_isFormValid();
+        final (isFormValid, validationErrorMessage) = _isFormValid();
+        final enabled = !_isEditMode || isFormValid; //isValid; //_isFormValid();
 /*        final style = TextButton.styleFrom(
           foregroundColor: enabled ? Theme.of(context).appBarTheme.titleTextStyle?.color : Colors.grey,
         );*/
-        return TextButton(
+        return validationErrorMessage.length > 0 ? Row(
+          children: [
+            TooltipIcon(
+              icon: Icon(Icons.warning_amber_rounded, color: Colors.red), 
+              tooltipMessage: validationErrorMessage,
+            ),
+            TextButton(
+              onPressed: enabled /*!_isEditMode || isValid */? _onConfirmPressed : null,
+              //style: style,
+              child: Text(_confirmButtonLabel),
+            )
+          ],) :
+        TextButton(
           onPressed: enabled /*!_isEditMode || isValid */? _onConfirmPressed : null,
           //style: style,
           child: Text(_confirmButtonLabel),
@@ -258,30 +272,30 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
   }
 
   // Form validation per specification (title & artist required; year numeric <10000; day valid wrt month/year rules)
-  bool _isFormValid() {
+  (bool, String) _isFormValid() {
     final titleOk = _titleController.text.trim().isNotEmpty;
     final artistOk = _artistController.text.trim().isNotEmpty;
 
     // Year validation
     if (_yearController.text.trim().isEmpty) {
       // If month selected or day present but year empty -> invalid
-      if (_monthSelected != 0) return false;
-      if (_dayController.text.trim().isNotEmpty) return false;
+      if (_monthSelected != 0) return (false, 'You must enter a year if month is specified');
+      if (_dayController.text.trim().isNotEmpty) return (false, 'You must enter a year and month if day is specified');
     } else {
       final year = int.tryParse(_yearController.text.trim());
-      if (year == null || year < 0 || year >= 10000) return false;
+      if (year == null || year < 0 || year >= 10000) return (false, 'Year must be a valid number between 0 and 9999');
       // If month present but invalid? month value already constrained
       if (_dayController.text.trim().isNotEmpty) {
         final day = int.tryParse(_dayController.text.trim());
-        if (day == null || day < 1 || day > 31) return false;
+        if (day == null || day < 1 || day > 31) return (false, 'Day must be a valid number between 1 and 31');
         // Validate day for selected month/year basic check (not perfect for Feb leap years)
         if (_monthSelected == 0) {
-          return false;
+          return (false, 'You must enter a month if day is specified');
         } else {
           final monthDays = <int>[
             0,
             31, // Jan
-            28, // Feb (not checking leap to keep logic simple)
+            29, // Feb (including leap to keep logic simple)
             31,
             30,
             31,
@@ -293,13 +307,13 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
             30,
             31
           ];
-          if (day > monthDays[_monthSelected]) return false;
+          if (day > monthDays[_monthSelected]) return (false, 'Invalid day for selected month');
         }
       }
     }
 
     // Title & artist must be present
-    return titleOk && artistOk;
+    return (titleOk && artistOk, '');
   }
 
   void _onCancelEdit() {
