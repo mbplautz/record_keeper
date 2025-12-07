@@ -32,6 +32,8 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
   bool _isEditMode = false;
   bool _startedInViewMode = false;
   bool _dirtyTags = false;
+  bool _addTagDialogVisible = false;
+  DateTime? _ignoreKeyboardUntil;
 
   // Album in-memory
   Album? _album;
@@ -369,73 +371,86 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
     FocusScope.of(context).unfocus();
 
     _tagController.clear();
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) {
-        return Dialog(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 600
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Add Tag', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  _buildTagAutocomplete(),
-                  const SizedBox(height: 12),
-                  Row(
-                    //crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.of(ctx).pop();
-                          },
-                          child: const Text('Cancel'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            final text = _tagController.text.trim();
-                            if (text.isEmpty) {
+    // Mark dialog visible so other UI (eg. keyboard resize) can adapt
+    if (mounted) setState(() => _addTagDialogVisible = true);
+    try {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (ctx) {
+          return Dialog(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 600,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Add Tag', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    _buildTagAutocomplete(),
+                    const SizedBox(height: 12),
+                    Row(
+                      //crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
                               Navigator.of(ctx).pop();
-                              return;
-                            }
-
-                            // Per spec: case-sensitive duplicate check
-                            final existing = _isNew ? _newAlbumTags : _tagProv.tags;
-                            final alreadyExists = existing.any((t) => t.tag == text);
-                            if (!alreadyExists) {
-                              if (_isNew) {
-                                final tag = Tag(id: null, albumId: _album!.id, tag: text);
-                                _newAlbumTags.add(tag); // persist later on Save/Add
-                              } else {
-                                final tag = Tag(id: null, albumId: _album!.id, tag: text);
-                                await _tagProv.addTag(tag); // persists immediately
-                                _dirtyTags = true;
-                              }
-                            }
-                            Navigator.of(ctx).pop();
-                            if (mounted) setState(() {});
-                          },
-                          child: const Text('OK'),
+                            },
+                            child: const Text('Cancel'),
+                          ),
                         ),
-                      )
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              final text = _tagController.text.trim();
+                              if (text.isEmpty) {
+                                Navigator.of(ctx).pop();
+                                return;
+                              }
+
+                              // Per spec: case-sensitive duplicate check
+                              final existing = _isNew ? _newAlbumTags : _tagProv.tags;
+                              final alreadyExists = existing.any((t) => t.tag == text);
+                              if (!alreadyExists) {
+                                if (_isNew) {
+                                  final tag = Tag(id: null, albumId: _album!.id, tag: text);
+                                  _newAlbumTags.add(tag); // persist later on Save/Add
+                                } else {
+                                  final tag = Tag(id: null, albumId: _album!.id, tag: text);
+                                  await _tagProv.addTag(tag); // persists immediately
+                                  _dirtyTags = true;
+                                }
+                              }
+                              Navigator.of(ctx).pop();
+                              if (mounted) setState(() {});
+                            },
+                            child: const Text('OK'),
+                          ),
+                        )
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          )
-        );
-      },
-    );
+          );
+        },
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _addTagDialogVisible = false;
+          // Ignore keyboard inset changes for a short period after the dialog
+          // closes to avoid flicker while the system keyboard animates away.
+          _ignoreKeyboardUntil = DateTime.now().add(const Duration(milliseconds: 500));
+        });
+      }
+    }
   }
 
   // Remove a tag immediately (persisted)
@@ -616,8 +631,11 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
     final media = MediaQuery.of(context);
     final fullSectionHeight = (media.size.height / 3).clamp(0, 400).toDouble();
     final squareSize = fullSectionHeight;
-    final bool keyboardVisible = media.viewInsets.bottom > 0;
-    final sectionHeight = keyboardVisible ? fullSectionHeight / 2 : fullSectionHeight;
+    final bool keyboardVisibleRaw = media.viewInsets.bottom > 0;
+    final now = DateTime.now();
+    final ignoreActive = _ignoreKeyboardUntil != null && now.isBefore(_ignoreKeyboardUntil!);
+    final effectiveKeyboardVisible = keyboardVisibleRaw && !ignoreActive;
+    final sectionHeight = (effectiveKeyboardVisible && !_addTagDialogVisible) ? fullSectionHeight / 2 : fullSectionHeight;
 
     final imageWidget = _pickedImageFile != null
         ? Image.file(File(_pickedImageFile!.path), fit: BoxFit.cover, width: squareSize, height: squareSize)
